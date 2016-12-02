@@ -119,7 +119,7 @@ int main()
                 {
                     std::cout << std::endl << std::endl;
                     double wynik;
-                    tsp.tabuSearch(3);
+                    tsp.tabuSearch(1000);
                     wynik = tsp.routeCost(tsp.solution);
 
                     std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;

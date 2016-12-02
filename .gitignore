@@ -1,0 +1,14 @@
+# Created by .ignore support plugin (hsz.mobi)
+CMakeLists.txt
+cmake-build-debug/*
+cmake-build-debug/
+.idea/*
+!/cmake-build-debug/a280.tsp
+!/cmake-build-debug/atsp.opt.tour
+!/cmake-build-debug/berlin52.tsp
+!/cmake-build-debug/ch130.tsp
+!/cmake-build-debug/ft70.atsp
+!/cmake-build-debug/ftv35.atsp
+!/cmake-build-debug/ftv170.atsp
+!/cmake-build-debug/tsp.opt.tour
+.idea/
