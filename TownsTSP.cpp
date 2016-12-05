@@ -284,9 +284,10 @@ void TownsTSP::performSA()
     return;
 }
 
-void TownsTSP::tabuSearch(int iterations)
+void TownsTSP::tabuSearch(int iterations, int aspiration)
 {
-    TabuList tabuList = *(new TabuList(this->map_dim));
+    int cadence = this->map_dim/5;
+    TabuList tabuList = *(new TabuList(this->map_dim, cadence));
 
     /*Rozwiązanie początkowe*/
     double currentLowestRouteCost = routeCost(this->solution);
@@ -300,25 +301,66 @@ void TownsTSP::tabuSearch(int iterations)
 
         int moveBeg, moveEnd;
         bool isOnTabu = true;
+        int *neighbourSolution;
+        double neighbourCost = DBL_MAX;
 
-        while(isOnTabu){
-            do{
-                moveBeg = rand()%this->map_dim;
-                moveEnd = rand()%this->map_dim;
-            }while(moveBeg == moveEnd);
+            int bestBeg;
+            int bestEnd;
+            /*Szukamy najlepszego rozwiązania w sąsiedztwie.
+             * Dla każdego miasta losujemy drugie, z którym zamieniamy je miejscami.
+             * (mogą się powtarzać, ale trudno)
+             */
+            for ( moveBeg = 0 ; moveBeg < this->map_dim ; moveBeg++) {
+                do{
+                    moveEnd = rand()%this->map_dim;
+                }while(moveBeg == moveEnd);
+                neighbourSolution = makeNeighbourPermutation(baseSolution, this->map_dim, moveBeg, moveEnd);
+                double cost = routeCost(neighbourSolution);
 
+                if(cost < neighbourCost){
+
+                    isOnTabu = tabuList.isOnTheList(moveBeg,moveEnd);
+                    if(isOnTabu){
+                        /*Kryterium aspiracji*/
+                        double improvement = neighbourCost - cost;
+                        improvement = improvement/neighbourCost;
+                        improvement *= 100;
+                        if(improvement >= aspiration ){
+                            std::cout<<"ASPIRACJA\n";
+                            neighbourCost = cost;
+                            bestBeg = moveBeg;
+                            bestEnd = moveEnd;
+                        }
+                    }else{
+                        neighbourCost = cost;
+                        bestBeg = moveBeg;
+                        bestEnd = moveEnd;
+                    }
+                }
+                delete[] neighbourSolution;
+            }
+
+            moveBeg = bestBeg;
+            moveEnd = bestEnd;
+
+            //Przypisujemy wylosowane sąsiednie rozwiązanie, póki co nie sprawdzając czy jest na tabu
+            neighbourSolution = makeNeighbourPermutation(baseSolution, this->map_dim, moveBeg, moveEnd);
+            // i obliczamy jego koszt
+            neighbourCost = routeCost(neighbourSolution);
             isOnTabu = tabuList.isOnTheList(moveBeg,moveEnd);
-        }
 
-        int *neighbourSolution = makeNeighbourPermutation(baseSolution, this->map_dim, moveBeg, moveEnd);
-
-        double neighbourCost = routeCost(neighbourSolution);
+            if(isOnTabu)
+                tabuList.removeFromList(moveBeg,moveEnd);
 
         if (neighbourCost < baseCost) {
             delete[] baseSolution;
             baseSolution = neighbourSolution;
             baseCost = neighbourCost;
+            tabuList.decrementCadence();
             tabuList.addMove(moveBeg, moveEnd);
+
+        }else{
+            tabuList.addMove(moveBeg,moveEnd);
             tabuList.decrementCadence();
         }
 
@@ -328,6 +370,7 @@ void TownsTSP::tabuSearch(int iterations)
             memcpy(this->solution, baseSolution, this->map_dim*sizeof(int));
             currentLowestRouteCost = baseCost;
         }
+
     }
 }
 
@@ -349,4 +392,3 @@ void TownsTSP::resetSolution() {
     for(int j = 0; j < 100; j++)
         permuteRoute(this->solution);
 }
-

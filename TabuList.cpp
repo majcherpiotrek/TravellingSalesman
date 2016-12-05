@@ -5,9 +5,10 @@
 #include "TabuList.h"
 
 
-TabuList::TabuList(int listSize) {
+TabuList::TabuList(int listSize, int _cadence) {
     tabuList = new Move*[listSize];
     size = listSize;
+    cadence = _cadence;
 
     for (int i = 0; i < size; i++)
         tabuList[i] = new Move[listSize];
@@ -21,10 +22,10 @@ TabuList::~TabuList() {
 }
 
 void TabuList::addMove(int moveBeg, int moveEnd) {
-    tabuList[moveBeg][moveEnd].cadence = CADENCE_CONSTANT;
+    tabuList[moveBeg][moveEnd].cadence = this->cadence;
     tabuList[moveBeg][moveEnd].usages++;
 
-    tabuList[moveEnd][moveBeg].cadence = CADENCE_CONSTANT;
+    tabuList[moveEnd][moveBeg].cadence = this->cadence;
     tabuList[moveEnd][moveBeg].usages++;
 }
 

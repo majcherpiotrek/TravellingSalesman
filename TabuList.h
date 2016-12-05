@@ -11,7 +11,7 @@ public:
         int cadence=0;
         int usages=0;
     };
-    TabuList(int listSize);
+    TabuList(int listSize, int _cadence);
     ~TabuList();
 
     void addMove(int moveBeg, int moveEnd);
@@ -20,7 +20,7 @@ public:
     bool isOnTheList(int moveBeg, int moveEnd);
 
 private:
-    static const int CADENCE_CONSTANT = 50;
+    int cadence;
     Move** tabuList;
     int size;
 };

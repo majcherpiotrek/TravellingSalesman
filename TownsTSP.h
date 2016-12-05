@@ -14,6 +14,7 @@
 #include <time.h>
 #include <string.h>
 #include <cstdlib>
+#include <float.h>
 #include "TabuList.h"
 
 struct coords
@@ -50,7 +51,7 @@ public:
     double routeCost(int *route);
 
     void performSA();
-    void tabuSearch(int iterations);
+    void tabuSearch(int iterations, int aspiration);
     void resetSolution();
 
 
