@@ -148,7 +148,7 @@ void run_tests_SA(void)
 void run_tests_TS(void)
 {
     int n = 4;
-    double t_rate_tab[] = { 0.85, 0.90, 0.99, 0.999};
+    double asp[] = { 5, 8, 10, 12};
 
     int n_files = 6;
     std::string files[] = {"berlin52.tsp", "ch130.tsp", "a280.tsp","ftv35.atsp", "ft70.atsp", "ftv170.atsp"};
@@ -173,55 +173,7 @@ void run_tests_TS(void)
 
         if( i >= 3) //ATSP
         {
-            TownsATSP prob = *(new TownsATSP());
-            prob.loadMap(files[i]);
-            opt_sol[i] = (double)prob.getOptCost();
-            for(int k = 0; k < n; k++) //Przechodzimy przez wszystkie wartości t_rate
-            {
-                double t = 0;
-                double mstk = 0;
-                double cst = 0;
-                for(int n = 0; n < repetitions; n++) //Powtarzamy repetitions razy dla uśrednienia
-                {
-                    clock_t START, STOP;
-
-                    START = clock();
-                    prob.performSA(/*t_rate_tab[k]*/);
-                    STOP = clock();
-
-                    t += (double)(STOP-START)/CLOCKS_PER_SEC*1000;
-
-                    double x = prob.routeCost(prob.solution);
-                    cst += x;
-                    mstk += x - opt_sol[i];
-
-                    prob.resetSolution();
-                }
-
-                /*Liczymy średni czas i dodajemy do tablicy wyników*/
-                time_results[k] =  t/repetitions;
-                mistake[k] = 100*(mstk/repetitions)/opt_sol[i];
-                costs[k] = cst/repetitions;
-            }
-
-            /*Zapisanie wyników dla danej instancji do pliku*/
-            std::fstream plik;
-            std::fstream plik_mstk;
-
-            plik.open(res_files_time[i], std::ios::out);
-            plik_mstk.open(res_files_MSTK[i], std::ios::out);
-
-            for (int j = 0; j < n; j++)
-            {
-                plik << time_results[j] << ";";
-                plik_mstk << mistake[j] << ";";
-            }
-            for (int j = 0; j < n; j++)
-                plik_mstk << costs[j] << ";";
-
-
-            plik.close();
-            plik_mstk.close();
+            break;
         }
         else //TSP
         {
@@ -240,7 +192,7 @@ void run_tests_TS(void)
                     clock_t START, STOP;
 
                     START = clock();
-                    prob.performSA(/*t_rate_tab[k]*/);
+                    prob.tabuSearch(1000,asp[k]);
                     STOP = clock();
 
                     t += (double)(STOP-START)/CLOCKS_PER_SEC*1000;
@@ -285,8 +237,8 @@ void run_tests_TS(void)
     return;
 }
 
-int test_program(void)
+int testprogram(void)
 {
-    run_tests_SA();
+    run_tests_TS();
     return 0;
 }
