@@ -296,7 +296,7 @@ void TownsTSP::tabuSearch()
 
     for (int i = 0; i < 5*map_dim; ++i) {
         /*Szukamy najlepszego ruchu w sąsiedztwie*/
-        findBestMove(baseSolution, moveBeg, moveEnd, tabu);
+        findBestMove(baseSolution, moveBeg, moveEnd, tabu, lowestCost);
 
 
 
@@ -340,7 +340,7 @@ void TownsTSP::resetSolution(int* solution) {
         permuteRoute(solution);
 }
 
-void TownsTSP::findBestMove(int *base, int &moveBeg, int &moveEnd, TabuList& tabuList) {
+void TownsTSP::findBestMove(int *base, int &moveBeg, int &moveEnd, TabuList& tabuList, int globalLowest) {
     /*Sąsiedztwo - zamiana dwóch krawędzi*/
     double bestNeighbourCost = DBL_MAX;
     int a,b, best_a = 0, best_b = 0;
@@ -354,17 +354,39 @@ void TownsTSP::findBestMove(int *base, int &moveBeg, int &moveEnd, TabuList& tab
         swapTowns(base, a, b);
         double cost = routeCost(base);
 
-        if(!tabuList.isOnTheList(a,b) && cost < bestNeighbourCost){
+        if( !tabuList.isOnTheList(a,b) && cost < bestNeighbourCost){
             best_a = a;
             best_b = b;
             bestNeighbourCost = cost;
             /*wykonujey ruch z powrotem, aby mieć znowu rozwiązanie bazowe*/
             swapTowns(base, a, b);
         }
-        else {
+        else{
+            if(tabuList.isOnTheList(a,b)){
+                if(cost < bestNeighbourCost)
+                {
+                    std::cout <<"lepsze od lokalnego\n";
+                    //bestNeighbourCost = cost;
+                    //best_a = a;
+                    //best_b = b;
+
+                    if(cost < globalLowest){
+                        std::cout<<"lepsze od globalnego\n";
+                        bestNeighbourCost = cost;
+                        globalLowest = cost;
+                        best_a = a;
+                        best_b = b;
+                    }
+
+                }
+                else
+                    std::cout << "dobrze, ze odrzucono\n";
+            }
+
+
             swapTowns(base, a, b);
-            std::cout << "tabu!\n";
         }
+
     }
 
     moveBeg = best_a;
