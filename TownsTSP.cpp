@@ -286,11 +286,13 @@ void TownsTSP::performSA()
 
 void TownsTSP::tabuSearch(int iterations, int aspiration)
 {
-    int cadence = this->map_dim/5;
+    int cadence = this->map_dim;
     TabuList tabuList = *(new TabuList(this->map_dim, cadence));
+    int resetCounter = 0;
 
     /*Rozwiązanie początkowe*/
     double currentLowestRouteCost = routeCost(this->solution);
+
 
     int* baseSolution = new int[this->map_dim];
     memcpy(baseSolution, this->solution, this->map_dim* sizeof(int));
@@ -302,64 +304,50 @@ void TownsTSP::tabuSearch(int iterations, int aspiration)
         int moveBeg, moveEnd;
         bool isOnTabu = true;
         int *neighbourSolution;
-        double neighbourCost = DBL_MAX;
+        double neighbourCost;
 
-            int bestBeg;
-            int bestEnd;
-            /*Szukamy najlepszego rozwiązania w sąsiedztwie.
-             * Dla każdego miasta losujemy drugie, z którym zamieniamy je miejscami.
-             * (mogą się powtarzać, ale trudno)
+            /*Trzeb jednak zrobić wyszukiwanie najlepszego rozwiązania w jakimś sąsiedztwie
              */
-            for ( moveBeg = 0 ; moveBeg < this->map_dim ; moveBeg++) {
 
-                do{
+
+                /*do{
+                    moveBeg = rand()%this->map_dim;
                     moveEnd = rand()%this->map_dim;
-                }while(moveBeg == moveEnd);
+                }while(moveBeg == moveEnd);*/
+                while(isOnTabu){
+                    findBestMove(baseSolution, moveBeg, moveEnd);
+                    neighbourSolution = makeNeighbourPermutation(baseSolution, this->map_dim, moveBeg, moveEnd);
+                    neighbourCost = routeCost(neighbourSolution);
+                    isOnTabu = tabuList.isOnTheList(moveBeg,moveEnd);
 
-                neighbourSolution = makeNeighbourPermutation(baseSolution, this->map_dim, moveBeg, moveEnd);
-                double cost = routeCost(neighbourSolution);
-                isOnTabu = tabuList.isOnTheList(moveBeg,moveEnd);
+                    if(neighbourCost < baseCost){
 
-                if(cost < neighbourCost){
-
-                    if(isOnTabu){
-                        /*Kryterium aspiracji*/
-                        double improvement = neighbourCost - cost;
-                        improvement = improvement/neighbourCost;
-                        improvement *= 100;
-                        if(improvement >= aspiration ){
-                            std::cout<<"ASPIRACJA\n";
-                            neighbourCost = cost;
-                            bestBeg = moveBeg;
-                            bestEnd = moveEnd;
+                        if(isOnTabu){
+                            /*Kryterium aspiracji*/
+                            double improvement = baseCost - neighbourCost;
+                            improvement = improvement/baseCost;
+                            improvement *= 100;
+                            if(improvement >= aspiration ){
+                                std::cout<<"ASPIRACJA\n";
+                                delete[] baseSolution;
+                                baseSolution = neighbourSolution;
+                                baseCost = neighbourCost;
+                                tabuList.addMove(moveBeg,moveEnd);
+                                isOnTabu = false;
+                            }
+                        }else{
+                            delete[] baseSolution;
+                            baseSolution = neighbourSolution;
+                            baseCost = neighbourCost;
+                            tabuList.addMove(moveBeg, moveEnd);
                         }
-                    }else{
-                        neighbourCost = cost;
-                        bestBeg = moveBeg;
-                        bestEnd = moveEnd;
+                    }
+                    else{
+                        resetCounter++;
                     }
                 }
-                if(!isOnTabu)
-                    tabuList.addMove(moveBeg, moveEnd);
-                delete[] neighbourSolution;
-            }
 
-            moveBeg = bestBeg;
-            moveEnd = bestEnd;
 
-            //Przypisujemy wylosowane sąsiednie rozwiązanie, póki co nie sprawdzając czy jest na tabu
-            neighbourSolution = makeNeighbourPermutation(baseSolution, this->map_dim, moveBeg, moveEnd);
-            // i obliczamy jego koszt
-            neighbourCost = routeCost(neighbourSolution);
-
-        if (neighbourCost < baseCost) {
-            delete[] baseSolution;
-            baseSolution = neighbourSolution;
-            baseCost = neighbourCost;
-            tabuList.decrementCadence();
-        }else{
-            tabuList.decrementCadence();
-        }
 
         if (baseCost < currentLowestRouteCost) {
             delete[] this->solution;
@@ -368,6 +356,14 @@ void TownsTSP::tabuSearch(int iterations, int aspiration)
             currentLowestRouteCost = baseCost;
         }
 
+
+        if( resetCounter == 50){
+                resetSolution(baseSolution);
+                std::cout << "reset po " << i << std::endl;
+                resetCounter = 0;
+            tabuList.clean();
+        }
+        tabuList.decrementCadence();
     }
 }
 
@@ -386,6 +382,86 @@ int* TownsTSP::makeNeighbourPermutation(int* basePermutation, int size, int move
 }
 
 void TownsTSP::resetSolution() {
-    for(int j = 0; j < 100; j++)
+    for(int j = 0; j < this->map_dim/2; j++)
         permuteRoute(this->solution);
 }
+
+void TownsTSP::resetSolution(int* solution) {
+    for(int j = 0; j < this->map_dim/2; j++)
+        permuteRoute(solution);
+}
+
+void TownsTSP::findBestMove(int *base, int &moveBeg, int &moveEnd) {
+
+    int* neighbourSolution;
+    int beg, end, bestBeg, bestEnd;
+    double lowestCost = DBL_MAX;
+    double neighbourCost;
+
+    for(int i = 0; i < this->map_dim; i++){
+        do{
+            beg = rand()%this->map_dim;
+            end = rand()%this->map_dim;
+        }while(beg == end);
+
+        neighbourSolution = makeNeighbourPermutation(base, this->map_dim, beg, end);
+        neighbourCost = routeCost(neighbourSolution);
+        if(neighbourCost < lowestCost){
+            bestBeg = beg;
+            bestEnd = end;
+            lowestCost = neighbourCost;
+        }
+        delete[] neighbourSolution;
+    }
+
+    moveBeg = bestBeg;
+    moveEnd = bestEnd;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

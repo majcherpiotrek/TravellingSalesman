@@ -46,3 +46,9 @@ bool TabuList::isOnTheList(int moveBeg, int moveEnd) {
     return (tabuList[moveBeg][moveEnd].cadence > 0) ? true : false;
 }
 
+void TabuList::clean() {
+    for(int i = 0; i < size; i++)
+        for(int k = 0; k < size; k++)
+            removeFromList(i,k);
+}
+

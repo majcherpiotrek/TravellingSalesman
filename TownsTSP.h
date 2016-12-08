@@ -53,7 +53,8 @@ public:
     void performSA();
     void tabuSearch(int iterations, int aspiration);
     void resetSolution();
-
+    void resetSolution(int* solution);
+    void findBestMove(int* base, int& moveBeg, int& moveEnd);
 
 
 };

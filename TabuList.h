@@ -17,6 +17,7 @@ public:
     void addMove(int moveBeg, int moveEnd);
     void decrementCadence();
     void removeFromList(int moveBeg, int moveEnd);
+    void clean();
     bool isOnTheList(int moveBeg, int moveEnd);
 
 private:
