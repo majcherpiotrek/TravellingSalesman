@@ -290,16 +290,18 @@ void TownsTSP::tabuSearch()
     int* baseSolution = new int[map_dim];
     memcpy(baseSolution,solution,map_dim*sizeof(int));
     double lowestCost = routeCost(solution);
+    TabuList tabu = *(new TabuList(map_dim, map_dim));
 
     int moveBeg, moveEnd;
 
     for (int i = 0; i < 5*map_dim; ++i) {
         /*Szukamy najlepszego ruchu w sąsiedztwie*/
-        findBestMove(baseSolution, moveBeg, moveEnd);
+        findBestMove(baseSolution, moveBeg, moveEnd, tabu);
 
-        /*Jeśli znaleziono w sąsiedtwie bazowego rozwiązania, rozwiązanie lepsze od niego*/
-        if(moveBeg != moveEnd)
-            swapTowns(baseSolution,moveBeg, moveEnd);
+
+
+        swapTowns(baseSolution,moveBeg, moveEnd);
+        tabu.addMove(moveBeg,moveEnd);
 
         double cost = routeCost(baseSolution);
         /*Jeśli znalezione rozwiązanie jest lepsze od dotychczas najlepszego*/
@@ -309,6 +311,7 @@ void TownsTSP::tabuSearch()
             solution = new int[map_dim];
             memcpy(solution, baseSolution, map_dim*sizeof(int));
         }
+        tabu.decrementCadence();
     }
     delete[] baseSolution;
 }
@@ -337,10 +340,9 @@ void TownsTSP::resetSolution(int* solution) {
         permuteRoute(solution);
 }
 
-void TownsTSP::findBestMove(int *base, int &moveBeg, int &moveEnd) {
+void TownsTSP::findBestMove(int *base, int &moveBeg, int &moveEnd, TabuList& tabuList) {
     /*Sąsiedztwo - zamiana dwóch krawędzi*/
-    double lowestCost = routeCost(base);
-    double currentCost;
+    double bestNeighbourCost = DBL_MAX;
     int a,b, best_a = 0, best_b = 0;
 
     for (int i = 0; i < 2*map_dim; ++i) {
@@ -350,16 +352,19 @@ void TownsTSP::findBestMove(int *base, int &moveBeg, int &moveEnd) {
         }while(a == b);
 
         swapTowns(base, a, b);
-        currentCost = routeCost(base);
+        double cost = routeCost(base);
 
-        if(currentCost < lowestCost){
+        if(!tabuList.isOnTheList(a,b) && cost < bestNeighbourCost){
             best_a = a;
             best_b = b;
-            lowestCost = currentCost;
+            bestNeighbourCost = cost;
             /*wykonujey ruch z powrotem, aby mieć znowu rozwiązanie bazowe*/
             swapTowns(base, a, b);
         }
-        swapTowns(base, a, b);
+        else {
+            swapTowns(base, a, b);
+            std::cout << "tabu!\n";
+        }
     }
 
     moveBeg = best_a;

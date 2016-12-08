@@ -55,7 +55,7 @@ public:
     void tabuSearch();
     void resetSolution();
     void resetSolution(int* solution);
-    void findBestMove(int* base, int& moveBeg, int& moveEnd);
+    void findBestMove(int* base, int& moveBeg, int& moveEnd, TabuList& tabuList);
 
 
 };
