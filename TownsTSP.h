@@ -51,7 +51,7 @@ public:
     double routeCost(int *route);
 
     void performSA();
-    void tabuSearch(int iterations, int aspiration);
+    void tabuSearch( int aspiration);
     void resetSolution();
     void resetSolution(int* solution);
     void findBestMove(int* base, int& moveBeg, int& moveEnd);
