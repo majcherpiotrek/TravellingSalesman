@@ -192,7 +192,7 @@ void run_tests_TS(void)
                     clock_t START, STOP;
 
                     START = clock();
-                    prob.tabuSearch(asp[k]);
+                    prob.tabuSearch();
                     STOP = clock();
 
                     t += (double)(STOP-START)/CLOCKS_PER_SEC*1000;

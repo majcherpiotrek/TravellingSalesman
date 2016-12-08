@@ -38,7 +38,8 @@ private:
     double computeDistance(coords A, coords B);
     int* makeNeighbourPermutation(int* basePermutation, int size, int moveBeg, int moveEnd);
     void permuteRoute(int* route);
-
+    void swapTowns(int* route, int a, int b);
+    double mval(int* solutionA, int* solutionB);
 public:
     int* solution;
 
@@ -51,7 +52,7 @@ public:
     double routeCost(int *route);
 
     void performSA();
-    void tabuSearch( int aspiration);
+    void tabuSearch();
     void resetSolution();
     void resetSolution(int* solution);
     void findBestMove(int* base, int& moveBeg, int& moveEnd);

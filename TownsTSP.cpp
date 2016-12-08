@@ -284,91 +284,33 @@ void TownsTSP::performSA()
     return;
 }
 
-void TownsTSP::tabuSearch(int aspiration)
+void TownsTSP::tabuSearch()
 {
-    int iterations = 10*this->map_dim;
-    int cadence = 1;
-    TabuList tabuList = *(new TabuList(this->map_dim, cadence));
-    int resetCounter = 0;
+    /*Wygenerowanie losowego rozwiązania początkowego*/
+    int* baseSolution = new int[map_dim];
+    memcpy(baseSolution,solution,map_dim*sizeof(int));
+    double lowestCost = routeCost(solution);
 
-    /*Rozwiązanie początkowe*/
-    double currentLowestRouteCost = routeCost(this->solution);
+    int moveBeg, moveEnd;
 
+    for (int i = 0; i < 5*map_dim; ++i) {
+        /*Szukamy najlepszego ruchu w sąsiedztwie*/
+        findBestMove(baseSolution, moveBeg, moveEnd);
 
-    int* baseSolution = new int[this->map_dim];
-    memcpy(baseSolution, this->solution, this->map_dim* sizeof(int));
-    double baseCost = routeCost(baseSolution);
+        /*Jeśli znaleziono w sąsiedtwie bazowego rozwiązania, rozwiązanie lepsze od niego*/
+        if(moveBeg != moveEnd)
+            swapTowns(baseSolution,moveBeg, moveEnd);
 
-    /*Losujemy sąsiada rozwiązania początkowego*/
-    for(int i=0; i<iterations; i++) {
-
-        int moveBeg, moveEnd;
-        bool isOnTabu = true;
-        int *neighbourSolution;
-        double neighbourCost;
-
-
-                /*do{
-                    moveBeg = rand()%this->map_dim;
-                    moveEnd = rand()%this->map_dim;
-                }while(moveBeg == moveEnd);
-
-                permuteRoute(baseSolution);
-                baseCost = routeCost(baseSolution);*/
-
-                while(isOnTabu){
-                    findBestMove(baseSolution, moveBeg, moveEnd);
-                    neighbourSolution = makeNeighbourPermutation(baseSolution, this->map_dim, moveBeg, moveEnd);
-                    neighbourCost = routeCost(neighbourSolution);
-                    isOnTabu = tabuList.isOnTheList(moveBeg,moveEnd);
-
-                    if(neighbourCost < baseCost){
-
-                        if(isOnTabu){
-                            std::cout<<"krok tabu\n";
-                            /*Kryterium aspiracji*/
-                            double improvement = baseCost - neighbourCost;
-                            improvement = improvement/baseCost;
-                            improvement *= 100;
-                            if(improvement >= aspiration ){
-                                std::cout<<"ASPIRACJA\n";
-                                delete[] baseSolution;
-                                baseSolution = neighbourSolution;
-                                baseCost = neighbourCost;
-                                tabuList.addMove(moveBeg,moveEnd);
-                                isOnTabu = false;
-                            }
-                        }else{
-                            std::cout<<"krok wolny\n";
-                            delete[] baseSolution;
-                            baseSolution = neighbourSolution;
-                            baseCost = neighbourCost;
-                            tabuList.addMove(moveBeg, moveEnd);
-                        }
-                    }
-                    else{
-                        resetCounter++;
-                    }
-                }
-
-
-
-        if (baseCost < currentLowestRouteCost) {
-            delete[] this->solution;
-            this->solution = new int[this->map_dim];
-            memcpy(this->solution, baseSolution, this->map_dim*sizeof(int));
-            currentLowestRouteCost = baseCost;
+        double cost = routeCost(baseSolution);
+        /*Jeśli znalezione rozwiązanie jest lepsze od dotychczas najlepszego*/
+        if( cost < lowestCost){
+            lowestCost = cost;
+            delete[] solution;
+            solution = new int[map_dim];
+            memcpy(solution, baseSolution, map_dim*sizeof(int));
         }
-
-
-        if( resetCounter == 3*this->map_dim){
-                resetSolution(baseSolution);
-                std::cout << "bez polepszenia po " << i << std::endl;
-                resetCounter = 0;
-                //tabuList.clean();
-        }
-        tabuList.decrementCadence();
     }
+    delete[] baseSolution;
 }
 
 int* TownsTSP::makeNeighbourPermutation(int* basePermutation, int size, int moveBeg, int moveEnd) {
@@ -396,34 +338,43 @@ void TownsTSP::resetSolution(int* solution) {
 }
 
 void TownsTSP::findBestMove(int *base, int &moveBeg, int &moveEnd) {
-    /*ZMIENIĆ DEFINICJĘ SĄSIEDZTWA
-    dywersyfikacja - np. poszerzenie sąsiedztwa
-     */
-    int* neighbourSolution;
-    int beg, end, bestBeg, bestEnd;
-    double lowestCost = DBL_MAX;
-    double neighbourCost;
+    /*Sąsiedztwo - zamiana dwóch krawędzi*/
+    double lowestCost = routeCost(base);
+    double currentCost;
+    int a,b, best_a = 0, best_b = 0;
 
-    for(int i = 0; i < 2*this->map_dim; i++){
+    for (int i = 0; i < 2*map_dim; ++i) {
         do{
-            beg = rand()%this->map_dim;
-            end = rand()%this->map_dim;
+            a = rand()%map_dim;
+            b = rand()%map_dim;
+        }while(a == b);
 
-        }while(beg == end);
+        swapTowns(base, a, b);
+        currentCost = routeCost(base);
 
-        neighbourSolution = makeNeighbourPermutation(base, this->map_dim, beg, end);
-        neighbourCost = routeCost(neighbourSolution);
-        if(neighbourCost < lowestCost){
-            bestBeg = beg;
-            bestEnd = end;
-            lowestCost = neighbourCost;
+        if(currentCost < lowestCost){
+            best_a = a;
+            best_b = b;
+            lowestCost = currentCost;
+            /*wykonujey ruch z powrotem, aby mieć znowu rozwiązanie bazowe*/
+            swapTowns(base, a, b);
         }
-
-        delete[] neighbourSolution;
+        swapTowns(base, a, b);
     }
 
-    moveBeg = bestBeg;
-    moveEnd = bestEnd;
+    moveBeg = best_a;
+    moveEnd = best_b;
+}
+
+void TownsTSP::swapTowns(int* route, int a, int b) {
+    int buf = route[a];
+    route[a] = route[b];
+    route[b] = buf;
+}
+
+/*Zwraca zysk z przejscia z rozwiązania A do rozwiązania B*/
+double TownsTSP::mval(int *solutionA, int *solutionB) {
+    return routeCost(solutionA) - routeCost(solutionB);
 }
 
 
