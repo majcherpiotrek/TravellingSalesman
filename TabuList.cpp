@@ -5,50 +5,37 @@
 #include "TabuList.h"
 
 
-TabuList::TabuList(int listSize, int _cadence) {
-    tabuList = new Move*[listSize];
-    size = listSize;
-    cadence = _cadence;
+TabuList::TabuList(int _listLength) {
+    listLength = _listLength;
+    tabuList = new Move[listLength];
+    for (int i = 0; i < listLength; ++i)
+        tabuList[i] = *(new Move());
 
-    for (int i = 0; i < size; i++)
-        tabuList[i] = new Move[listSize];
-
+    listHead = 0;
+    currentLength = 0;
 }
 
 TabuList::~TabuList() {
-        for(int i = 0; i < size; i++)
-            if(tabuList[i] != nullptr)
-                delete[] tabuList[i];
+    if(tabuList != nullptr)
+        delete[] tabuList;
 }
 
-void TabuList::addMove(int moveBeg, int moveEnd) {
-    tabuList[moveBeg][moveEnd].cadence = this->cadence;
-    tabuList[moveBeg][moveEnd].usages++;
+void TabuList::addMove(Move move) {
+    //Jeśli lista nie jest jeszcze zapełniona
+    if(tabuList[listHead].leftTown == -1)
+        currentLength++; //to zwiększamy zapełnienie listy
 
-    tabuList[moveEnd][moveBeg].cadence = this->cadence;
-    tabuList[moveEnd][moveBeg].usages++;
+    tabuList[listHead++] = move;
+    //Jeśli jesteśmy na ostatnim wolnym miejscu na liście
+    if(listHead == listLength)
+        listHead = 0; //to wracamy na początek listy
 }
 
-void TabuList::decrementCadence() {
-    for(int i = 0; i < size; i++){
-        for (int j = 0; j < size; j++){
-            if(tabuList[i][j].cadence > 0)
-                tabuList[i][j].cadence--;
-        }
-    }
-}
+bool TabuList::isOnTheList(Move move) {
 
-void TabuList::removeFromList(int moveBeg, int moveEnd) {
-    tabuList[moveBeg][moveEnd].cadence = 0;
-}
+    for (int i = 0; i < currentLength; ++i)
+        if(tabuList[i].leftTown == move.leftTown && tabuList[i].rightTown == move.rightTown)
+            return true;
 
-bool TabuList::isOnTheList(int moveBeg, int moveEnd) {
-    return (tabuList[moveBeg][moveEnd].cadence > 0) ? true : false;
+    return false;
 }
-
-void TabuList::clean() {
-    for(int i = 0; i < size; i++)
-        for(int k = 0; k < size; k++)
-            removeFromList(i,k);
-}
-

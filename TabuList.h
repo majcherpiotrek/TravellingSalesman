@@ -8,22 +8,31 @@
 class TabuList {
 public:
     struct Move{
-        int cadence=0;
-        int usages=0;
+        int leftTown;
+        int rightTown;
+
+        Move(){
+            leftTown = -1;
+            rightTown =-1;
+        }
+
+        Move(int l, int r){
+            leftTown = l;
+            rightTown =r;
+        }
     };
-    TabuList(int listSize, int _cadence);
+
+    TabuList(int _listLength);
     ~TabuList();
 
-    void addMove(int moveBeg, int moveEnd);
-    void decrementCadence();
-    void removeFromList(int moveBeg, int moveEnd);
-    void clean();
-    bool isOnTheList(int moveBeg, int moveEnd);
+    void addMove(Move move);
+    bool isOnTheList(Move move);
 
 private:
-    int cadence;
-    Move** tabuList;
-    int size;
+    int listLength;
+    int currentLength;
+    int listHead;
+    Move* tabuList;
 };
 
 
