@@ -40,6 +40,7 @@ private:
     void permuteRoute(int* route);
     void swapTowns(int* route, int a, int b);
     double mval(int* solutionA, int* solutionB);
+    void determineMaxMoves(TabuList::Move*& maxMoves, int* positions, int cityCount, TabuList& tabu);
 public:
     int* solution;
 

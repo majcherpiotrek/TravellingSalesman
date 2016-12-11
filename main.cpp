@@ -1,143 +1,38 @@
-#include "Menu.h"
 #include "TownsTSP.h"
 #include "TownsATSP.h"
+#include <ctime>
 
 int main()
 {
-    Menu main_menu = *(new Menu());
 
-    main_menu.add("PIOTR MAJCHER - PROJEKT PEA - PROBLEM KOMIWOJAZERA\n");
-    main_menu.add("MENU GLOWNE\n");
-    main_menu.add("***************************************************************************\n\n(r) Odswiez widok menu.\n");
-    main_menu.add("(a) Symulowane wyzarzanie - ATSP\n");
-    main_menu.add("(t) Symulowane wyzarzanie - TSP\n");
-    main_menu.add("(b) Tabu search - ATSP\n");
-    main_menu.add("(c) Tabu search - TSP\n");
+    std::string fileName[] = {"berlin52.tsp", "ch130.tsp", "a280.tsp"};
 
-    main_menu.add("\n(k) Zakoncz program ... ");
+    for(int j = 0; j < 3; j++){
+        TownsTSP towns = *(new TownsTSP());
+        towns.loadMap(fileName[j]);
 
-    bool end = false;
-    bool bad_command = false;
+        clock_t START, STOP;
+        double t = 0;
+        int reps = 10;
+        int results = 0;
+        int optCost = towns.getOptCost();
 
-    std::cout << main_menu;
+        for(int i=0; i<reps;i++){
+            START = clock();
+            towns.tabuSearch();
+            STOP = clock();
 
-    while(!end)
-    {
-        if (bad_command)
-        {
-            std::cout << "Bledny numer opcji! Twoj wybor-> ";
-            bad_command = false;
+            results += towns.routeCost(towns.solution);
+            t += (double)(STOP-START)/CLOCKS_PER_SEC*1000;
+            towns.resetSolution();
         }
-        else
-            std::cout << "\nTwoj wybor -> ";
 
-        std::cin.clear();
-        std::cin.sync();
+        results = results/reps;
+        t = t/reps;
+        double mistake = (double)(results - optCost)/(double)optCost;
+        mistake *= 100;
 
-        char decision;
-        std::cin >> decision;
-
-        switch(decision)
-        {
-            case 'r':
-            {
-                //odswiez ekran
-                system("clear");
-                std::cout << main_menu;
-                break;
-            }
-
-            case 'a':
-            {
-                std::cout << "\nInstancje problemu ATSP:\nftv35.atsp\nft70.atsp\nftv170.atsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
-                std::string nazwa;
-                std::cin >> nazwa;
-
-                TownsATSP atsp = *(new TownsATSP());
-                if(atsp.loadMap(nazwa))
-                {
-                    std::cout << std::endl << std::endl;
-                    double wynik;
-                    atsp.performSA();
-                    wynik = atsp.routeCost(atsp.solution);
-
-                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
-                    std::cout << "Koszt rozwiazania optymalnego: " << atsp.getOptCost() << std::endl;
-                }
-                break;
-            }
-
-            case 't':
-            {
-                std::cout << "\nInstancje problemu TSP:\nberlin52.tsp\nch130.tsp\na280.tsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
-                std::string nazwa;
-                std::cin >> nazwa;
-
-                TownsTSP tsp = *(new TownsTSP());
-                if(tsp.loadMap(nazwa))
-                {
-                    std::cout << std::endl << std::endl;
-                    double wynik;
-                    tsp.performSA();
-                    wynik = tsp.routeCost(tsp.solution);
-
-                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
-                    std::cout << "Koszt rozwiazania optymalnego: " << tsp.getOptCost() << std::endl;
-                }
-
-                break;
-            }
-
-            case 'b':
-            {
-                std::cout << "\nInstancje problemu ATSP:\nftv35.atsp\nft70.atsp\nftv170.atsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
-                std::string nazwa;
-                std::cin >> nazwa;
-
-                TownsATSP atsp = *(new TownsATSP());
-                if(atsp.loadMap(nazwa))
-                {
-                    std::cout << std::endl << std::endl;
-                    double wynik;
-                    atsp.tabuSearch(1000);
-                    wynik = atsp.routeCost(atsp.solution);
-
-                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
-                    std::cout << "Koszt rozwiazania optymalnego: " << atsp.getOptCost() << std::endl;
-                }
-                break;
-            }
-
-            case 'c':
-            {
-                std::cout << "\nInstancje problemu TSP:\nberlin52.tsp\nch130.tsp\na280.tsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
-                std::string nazwa;
-                std::cin >> nazwa;
-
-                TownsTSP tsp = *(new TownsTSP());
-                if(tsp.loadMap(nazwa))
-                {
-                    std::cout << std::endl << std::endl;
-                    double wynik;
-                    tsp.tabuSearch();
-                    wynik = tsp.routeCost(tsp.solution);
-
-                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
-                    std::cout << "Koszt rozwiazania optymalnego: " << tsp.getOptCost() << std::endl;
-                }
-
-                break;
-            }
-
-            case 'k':
-            {
-                end = true;
-                break;
-            }
-
-            default:
-                bad_command = true;
-        }
+        std::cout << fileName[j] << " best cost: " << optCost << " found: " << results << " time: " << t << " mistake " << mistake << "%\n";
     }
 
     return 0;

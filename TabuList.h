@@ -4,16 +4,18 @@
 
 #ifndef TRAVELLINGSALESMANPROBLEMALGORITHMS_TABULIST_H
 #define TRAVELLINGSALESMANPROBLEMALGORITHMS_TABULIST_H
+#include <iostream>
 
 class TabuList {
 public:
     struct Move{
         int leftTown;
         int rightTown;
-
+        int cadence;
         Move(){
             leftTown = -1;
             rightTown =-1;
+            cadence = 0;
         }
 
         Move(int l, int r){
@@ -27,7 +29,9 @@ public:
 
     void addMove(Move move);
     bool isOnTheList(Move move);
-
+    int getCurrentLength(){return currentLength;}
+    Move getMove(int i);
+    void print();
 private:
     int listLength;
     int currentLength;

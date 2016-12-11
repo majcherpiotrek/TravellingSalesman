@@ -291,7 +291,7 @@ void TownsTSP::tabuSearch()
     memcpy(baseSolution,solution,map_dim*sizeof(int));
     double lowestCost = routeCost(solution);
     TabuList tabu = *(new TabuList(20));
-    int resetCounter = 0;
+    TabuList::Move* maxMoves = new TabuList::Move[map_dim];
 
     //Tablicza przechowująca indeksy kolejnych miast w rozwiązaniu
     int* townsPositions = new int[map_dim];
@@ -299,38 +299,53 @@ void TownsTSP::tabuSearch()
         townsPositions[baseSolution[k]] = k;
 
     for(int m = 0; m<1000; m++){
-        double currentBestCost = routeCost(baseSolution);
-        int bestLeftTown = -1;
-        int bestRightTown = -1;
-        //Szukamy najlepszego sąsiada (sąsiedztwo jako wszystkie możliwe ruchy dla danego rozwiązania)
-        for (int i = 0; i < map_dim-1; ++i) {
-            for (int j = i+1; j < map_dim; ++j) {
-                int leftTown = baseSolution[i];
-                int rightTown = baseSolution[j];
+        double currentBestCost = DBL_MAX;
+        int bestLeftTown =-1;
+        int bestRightTown=-1;
 
-                TabuList::Move move = *(new TabuList::Move(leftTown,rightTown));
+        //Szukamy najlepszego sąsiada (sąsiedztwo jako losowe map_dim sąsiednich permutacji)
+        for (int i = 0; i < 4*map_dim; ++i) {
 
-                //Jeśli ruch jest na tabu to przechodzimy do kolejnego ruchu
-                if(tabu.isOnTheList(move)){
+            int leftTown;
+            int rightTown;
+            TabuList::Move move;
+            TabuList::Move mirrorMove;
+            bool noAspiration = true;
+            do {
+
+                do {
+                    leftTown = rand() % map_dim;
+                    rightTown = rand() % map_dim;
+                } while (leftTown == rightTown);
+
+                move = *(new TabuList::Move(leftTown,rightTown));
+                mirrorMove = *(new TabuList::Move(rightTown,leftTown));
+                //Jeśli ruch jest na tabu
+                if(tabu.isOnTheList(move) || tabu.isOnTheList(mirrorMove)){
                     int* tempSolution = new int[map_dim];
                     memcpy(tempSolution, baseSolution, map_dim*sizeof(int));
-                    swapTowns(tempSolution, i, j);
+                    swapTowns(tempSolution, townsPositions[leftTown], townsPositions[rightTown]);
                     double newCost = routeCost(tempSolution);
                     double ratio = (lowestCost - newCost)/lowestCost;
                     ratio *= 100;
-                    if(ratio >= 0){
+                    if(ratio > 0.1){
+               
                         bestLeftTown = leftTown;
                         bestRightTown = rightTown;
                         currentBestCost = newCost;
-                        std::cout<< "aspiracja" << ratio <<"\n";
+                        //std::cout<< "aspiracja " << ratio << std::endl;
+                        noAspiration = false;
                     }
                     delete[] tempSolution;
-
                 }
+            }while((tabu.isOnTheList(move) || tabu.isOnTheList(mirrorMove)) && noAspiration);
+
+                if(!noAspiration)
+                    continue;
 
                 int* tempSolution = new int[map_dim];
                 memcpy(tempSolution, baseSolution, map_dim*sizeof(int));
-                swapTowns(tempSolution, i, j);
+                swapTowns(tempSolution, townsPositions[leftTown], townsPositions[rightTown]);
                 double newCost = routeCost(tempSolution);
 
                 //Jeśli ruch daje rozwiązanie lepsze od bazowego
@@ -342,31 +357,39 @@ void TownsTSP::tabuSearch()
 
                 delete[] tempSolution;
             }
-        }
 
-        //Jeśli w sąsiedztwie nie ma nic lepszego to losujemy nowe rozwiązanie bazowe
-        if(bestLeftTown == -1)
-            resetSolution(baseSolution);
-        else{
-            //wykonujemy ruch
-            swapTowns(baseSolution, townsPositions[bestLeftTown], townsPositions[bestRightTown]);
-            //dodajemy go do listy tabu
+        //wykonujemy ruch
+        //std::cout << "\nWykonano ruch: idx: " << townsPositions[bestLeftTown] << " town: " << baseSolution[townsPositions[bestLeftTown]] << std::endl;
+        //std::cout << " idx: " << townsPositions[bestRightTown] << " town: " << baseSolution[townsPositions[bestRightTown]] << std::endl;
+
+        //for(int i = 0; i < map_dim; ++i) {
+          //  std::cout.flush();
+            //std::cout << baseSolution[i] << ", ";
+        //}
+
+        //dodajemy go do listy tabu
+        if(!tabu.isOnTheList(*new TabuList::Move(bestLeftTown, bestRightTown)) && !tabu.isOnTheList(*new TabuList::Move(bestRightTown, bestLeftTown)))
             tabu.addMove(*(new TabuList::Move(bestLeftTown, bestRightTown)));
-            //Zamieniamy indeksy w tablicy pozycji
-            int bufPosition = townsPositions[bestLeftTown];
-            townsPositions[bestLeftTown] = townsPositions[bestRightTown];
-            townsPositions[bestRightTown] = bufPosition;
+        //std::cout << std::endl;
+        //std::cout << "tabu list: ";
+        //std::cout.flush();
+        //tabu.print();
 
-            //Jeśli lepsze od aktualnie najlepszego
-            if(currentBestCost < lowestCost){
-                delete[] solution;
-                solution = new int[map_dim];
-                memcpy(solution, baseSolution, map_dim*sizeof(int));
-                lowestCost = currentBestCost;
-            }
-            else
-                resetCounter++;
+        swapTowns(baseSolution, townsPositions[bestLeftTown], townsPositions[bestRightTown]);
+        //Zamieniamy indeksy w tablicy pozycji
+        int bufPosition = townsPositions[bestLeftTown];
+        townsPositions[bestLeftTown] = townsPositions[bestRightTown];
+        townsPositions[bestRightTown] = bufPosition;
+
+        //Jeśli lepsze od aktualnie najlepszego
+        if(currentBestCost < lowestCost){
+            delete[] solution;
+            solution = new int[map_dim];
+            memcpy(solution, baseSolution, map_dim*sizeof(int));
+            lowestCost = currentBestCost;
         }
+
+
     }
 }
 
@@ -403,6 +426,23 @@ void TownsTSP::swapTowns(int* route, int a, int b) {
 /*Zwraca zysk z przejscia z rozwiązania A do rozwiązania B*/
 double TownsTSP::mval(int *solutionA, int *solutionB) {
     return routeCost(solutionA) - routeCost(solutionB);
+}
+
+void TownsTSP::determineMaxMoves(TabuList::Move*& maxMoves, int* positions, int cityCount, TabuList& tabu)
+{
+    for (int i = 0; i < cityCount; ++i)
+    {
+        maxMoves[i].leftTown = 0;
+        maxMoves[i].rightTown = cityCount - 1;
+    }
+
+    for (int i = 0; i < tabu.getCurrentLength(); ++i)
+    {
+        int tL = tabu.getMove(i).leftTown;
+        int tR = tabu.getMove(i).rightTown;
+        maxMoves[tL].leftTown = std::min(positions[tL], std::max(positions[tR] + 1, maxMoves[tL].leftTown));
+        maxMoves[tR].rightTown = std::max(positions[tR], std::min(positions[tL] - 1, maxMoves[tR].rightTown));
+    }
 }
 
 
