@@ -13,7 +13,7 @@ int main()
 
         clock_t START, STOP;
         double t = 0;
-        int reps = 10;
+        int reps = 50;
         int results = 0;
         int optCost = towns.getOptCost();
 
