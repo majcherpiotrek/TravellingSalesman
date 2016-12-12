@@ -316,15 +316,29 @@ void TownsTSP::tabuSearch(int tt)
         for (int i = 0; i < map_dim - 1; ++i) {
             for (int j = i + 1; j < map_dim; ++j) {
 
+                /*we check aspiration*/
+                if(tabu.isTabu(solutionC[i], solutionC[j]) || tabu.isTabu(solutionC[j], solutionC[i])){
+                    swapTowns(solutionC, i, j);
+                    /*calculating the cost of neighbour solution*/
+                    double tempCost = routeCost(solutionC);
+                    /*if move on tabu leads to solution better then ever*/
+                    if(tempCost < globalLowest){
+                        neighbourhoodLowest = tempCost;
+                        bestLeft = i;
+                        bestRight = j;
+                    }
+                    /*come back to initial solution*/
+                    swapTowns(solutionC, i, j);
+                    continue;
+                }
+
                 swapTowns(solutionC, i, j);
                 /*calculating the cost of neighbour solution*/
                 double tempCost = routeCost(solutionC);
-                /*changing two cities always causes two edges to switch
-                 */
 
-                /*if the move leads to the currently best solution in neighburhood then save it as currently best*/
-                bool isTabu = tabu.isTabu(solutionC[i], solutionC[j]) || tabu.isTabu(solutionC[j], solutionC[i]) ;
-                if (tempCost < neighbourhoodLowest && !isTabu) {
+
+                /*if the move leads to the currently best solution in neighbourhood then save it as currently best*/
+                if (tempCost < neighbourhoodLowest) {
                     neighbourhoodLowest = tempCost;
                     bestLeft = i;
                     bestRight = j;
@@ -335,7 +349,6 @@ void TownsTSP::tabuSearch(int tt)
             }
         }
 
-        /*now we make the move without checking if it's better then solutionC*/
         /*add the move to tabu*/
         tabu.addMove(solutionC[bestLeft], solutionC[bestRight]);
         /*update the positions list*/
@@ -355,7 +368,7 @@ void TownsTSP::tabuSearch(int tt)
         else
             iterations++;
 
-        if(iterations == 50)
+        if(iterations == 500)
             stopCriteria = true;
         tabu.decrementTenure();
     }

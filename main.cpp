@@ -7,7 +7,7 @@ int main()
 {
 
     std::string fileName[] = {"berlin52.tsp", "ch130.tsp", "a280.tsp"};
-    int whichInstance = 1;
+    int whichInstance = 0;
         TownsTSP towns = *(new TownsTSP());
         towns.loadMap(fileName[whichInstance]);
 
@@ -32,7 +32,7 @@ int main()
 
 
     std::fstream file;
-    std::string name = "test_results/test_tt_3_ch130.csv";
+    std::string name = "test_results/test_tt_aspiration_berlin52.csv";
     file.open(name, std::ios::out);
     for(int i=0; i<100; i++)
         file << mistakes[i] << ";";
