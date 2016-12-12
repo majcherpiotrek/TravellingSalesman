@@ -381,7 +381,7 @@ double TownsTSP::mval(int *solutionA, int *solutionB) {
     return routeCost(solutionA) - routeCost(solutionB);
 }
 
-void TownsTSP::determineMaxMoves(TabuList::Move*& maxMoves, int* positions, int cityCount, TabuList& tabu)
+void TownsTSP::determineMaxMoves(TabuQueue::Move*& maxMoves, int* positions, int cityCount, TabuQueue& tabu)
 {
     for (int i = 0; i < cityCount; ++i)
     {

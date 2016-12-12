@@ -15,7 +15,7 @@
 #include <string.h>
 #include <cstdlib>
 #include <float.h>
-#include "TabuList.h"
+#include "TabuQueue.h"
 
 struct coords
 {
@@ -40,7 +40,7 @@ private:
     void permuteRoute(int* route);
     void swapTowns(int* route, int a, int b);
     double mval(int* solutionA, int* solutionB);
-    void determineMaxMoves(TabuList::Move*& maxMoves, int* positions, int cityCount, TabuList& tabu);
+    void determineMaxMoves(TabuQueue::Move*& maxMoves, int* positions, int cityCount, TabuQueue& tabu);
 public:
     int* solution;
 

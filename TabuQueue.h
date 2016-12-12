@@ -6,7 +6,7 @@
 #define TRAVELLINGSALESMANPROBLEMALGORITHMS_TABULIST_H
 #include <iostream>
 
-class TabuList {
+class TabuQueue {
 public:
     struct Move{
         int leftTown;
@@ -24,8 +24,8 @@ public:
         }
     };
 
-    TabuList(int _listLength);
-    ~TabuList();
+    TabuQueue(int _listLength);
+    ~TabuQueue();
 
     void addMove(Move move);
     bool isOnTheList(Move move);

@@ -2,10 +2,10 @@
 // Created by piotrek on 01.12.16.
 //
 
-#include "TabuList.h"
+#include "TabuQueue.h"
 
 
-TabuList::TabuList(int _listLength) {
+TabuQueue::TabuQueue(int _listLength) {
     listLength = _listLength;
     tabuList = new Move[listLength];
     for (int i = 0; i < listLength; ++i)
@@ -15,12 +15,12 @@ TabuList::TabuList(int _listLength) {
     currentLength = 0;
 }
 
-TabuList::~TabuList() {
+TabuQueue::~TabuQueue() {
     if(tabuList != nullptr)
         delete[] tabuList;
 }
 
-void TabuList::addMove(Move move) {
+void TabuQueue::addMove(Move move) {
     if(!isOnTheList(move)){
         //Jeśli lista nie jest jeszcze zapełniona
         if(tabuList[listHead].leftTown == -1)
@@ -33,7 +33,7 @@ void TabuList::addMove(Move move) {
     }
 }
 
-bool TabuList::isOnTheList(Move move) {
+bool TabuQueue::isOnTheList(Move move) {
 
     for (int i = 0; i < currentLength; ++i)
         if(tabuList[i].leftTown == move.leftTown && tabuList[i].rightTown == move.rightTown)
@@ -42,7 +42,7 @@ bool TabuList::isOnTheList(Move move) {
     return false;
 }
 
-TabuList::Move TabuList::getMove(int i) {
+TabuQueue::Move TabuQueue::getMove(int i) {
 
     if (i < 0 || currentLength <= i) return Move();
     int idx = listHead - 1 - i;
@@ -51,7 +51,7 @@ TabuList::Move TabuList::getMove(int i) {
 
 }
 
-void TabuList::print() {
+void TabuQueue::print() {
     for(int i = 0; i< listLength; i++){
         std::cout.flush();
         std::cout << "(" << tabuList[i].leftTown << "," << tabuList[i].rightTown << ")";
