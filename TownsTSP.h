@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <float.h>
 #include "TabuQueue.h"
+#include "TabuMatrix.h"
 
 struct coords
 {

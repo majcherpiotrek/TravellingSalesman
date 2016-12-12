@@ -3,3 +3,20 @@
 //
 
 #include "TabuMatrix.h"
+
+TabuMatrix::TabuMatrix(int s, int tt) {
+    size = s;
+    tabuTenure = tt;
+    tabuMatrix = new int*[size];
+    for (int i = 0; i < size; ++i) {
+        tabuMatrix[i] = new int [size];
+        for (int j = 0; j < size ; ++j)
+            tabuMatrix[i][j] = 0; //tabuTenure = 0
+    }
+}
+
+bool TabuMatrix::isTabu(int a, int b) {
+    if(tabuMatrix[a][b] > 0)
+        return true;
+    return false;
+}
