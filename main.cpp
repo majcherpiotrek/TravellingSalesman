@@ -1,39 +1,43 @@
 #include "TownsTSP.h"
 #include "TownsATSP.h"
 #include <ctime>
+#include <fstream>
 
 int main()
 {
 
     std::string fileName[] = {"berlin52.tsp", "ch130.tsp", "a280.tsp"};
-
-    for(int j = 0; j < 3; j++){
+    int whichInstance = 1;
         TownsTSP towns = *(new TownsTSP());
-        towns.loadMap(fileName[j]);
+        towns.loadMap(fileName[whichInstance]);
 
-        clock_t START, STOP;
-        double t = 0;
-        int reps = 100;
-        int results = 0;
+
+
+        double results = 0;
         int optCost = towns.getOptCost();
 
-        for(int i=0; i<reps;i++){
-            START = clock();
-            towns.tabuSearch();
-            STOP = clock();
+        double mistakes[100];
+        for(int i = 0; i< 100; i++){
 
-            results += towns.routeCost(towns.solution);
-            t += (double)(STOP-START)/CLOCKS_PER_SEC*1000;
-            towns.resetSolution();
+
+                towns.tabuSearch(i);
+
+                results = towns.routeCost(towns.solution);
+                towns.resetSolution();
+
+            double mistake = (results - optCost)/(double)optCost;
+            mistake *= 100;
+            mistakes[i] = mistake;
         }
 
-        results = results/reps;
-        t = t/reps;
-        double mistake = (double)(results - optCost)/(double)optCost;
-        mistake *= 100;
 
-        std::cout << fileName[j] << " best cost: " << optCost << " found: " << results << " time: " << t << " mistake " << mistake << "%\n";
-    }
+    std::fstream file;
+    std::string name = "test_results/test_tt_3_ch130.csv";
+    file.open(name, std::ios::out);
+    for(int i=0; i<100; i++)
+        file << mistakes[i] << ";";
+    file.close();
+
 
     return 0;
 }

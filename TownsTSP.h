@@ -54,7 +54,7 @@ public:
     double routeCost(int *route);
 
     void performSA();
-    void tabuSearch();
+    void tabuSearch(int tt);
     void resetSolution();
     void resetSolution(int* solution);
 };

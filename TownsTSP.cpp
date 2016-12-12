@@ -284,7 +284,7 @@ void TownsTSP::performSA()
     return;
 }
 
-void TownsTSP::tabuSearch()
+void TownsTSP::tabuSearch(int tt)
 {
     /*Local search*/
 
@@ -306,7 +306,7 @@ void TownsTSP::tabuSearch()
     bool stopCriteria = false;
 
     /*tabu matrix*/
-    int tabuTenure = 25;
+    int tabuTenure = tt;
     TabuMatrix tabu = *new TabuMatrix(map_dim, tabuTenure);
 
     while(!stopCriteria) {
@@ -355,11 +355,11 @@ void TownsTSP::tabuSearch()
         else
             iterations++;
 
-        if(iterations == 500)
+        if(iterations == 50)
             stopCriteria = true;
         tabu.decrementTenure();
     }
-    std::cout<<"iteracje: " <<iterations <<std::endl;
+    //std::cout<<"iteracje: " <<iterations <<std::endl;
 }
 
 int* TownsTSP::makeNeighbourPermutation(int* basePermutation, int size, int moveBeg, int moveEnd) {
