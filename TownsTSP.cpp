@@ -329,7 +329,7 @@ void TownsTSP::tabuSearch()
                     double ratio = (lowestCost - newCost)/lowestCost;
                     ratio *= 100;
                     if(ratio > 0.1){
-               
+
                         bestLeftTown = leftTown;
                         bestRightTown = rightTown;
                         currentBestCost = newCost;
