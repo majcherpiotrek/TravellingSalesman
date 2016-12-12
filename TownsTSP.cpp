@@ -298,13 +298,13 @@ void TownsTSP::tabuSearch()
     for (int k = 0; k < map_dim ; ++k)
         townsPositions[baseSolution[k]] = k;
 
-    for(int m = 0; m<1000; m++){
+    for(int m = 0; m<5000; m++){
         double currentBestCost = DBL_MAX;
         int bestLeftTown =-1;
         int bestRightTown=-1;
-
+        double diversification = 4;
         //Szukamy najlepszego sąsiada (sąsiedztwo jako losowe map_dim sąsiednich permutacji)
-        for (int i = 0; i < 4*map_dim; ++i) {
+        for (int i = 0; i < diversification*map_dim; ++i) {
 
             int leftTown;
             int rightTown;
@@ -336,6 +336,9 @@ void TownsTSP::tabuSearch()
                         //std::cout<< "aspiracja " << ratio << std::endl;
                         noAspiration = false;
                     }
+                    else
+                        diversification+=0.5;
+
                     delete[] tempSolution;
                 }
             }while((tabu.isOnTheList(move) || tabu.isOnTheList(mirrorMove)) && noAspiration);
