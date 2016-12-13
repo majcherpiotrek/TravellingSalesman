@@ -314,9 +314,13 @@ void TownsTSP::tabuSearch(int tt)
         /*find best neighbour of solutionC*/
         double neighbourhoodLowest = DBL_MAX;
         int bestLeft = -1, bestRight=-1;
-        for (int i = 0; i < map_dim - 1; ++i) {
-            for (int j = i + 1; j < map_dim; ++j) {
+        for (int k = 0; k < 3*map_dim; ++k) {
 
+                int i,j;
+                do{
+                    i = rand()%map_dim;
+                    j = rand()%map_dim;
+                }while(i == j);
                 /*we check aspiration*/
                 if(tabu.isTabu(solutionC[i], solutionC[j]) || tabu.isTabu(solutionC[j], solutionC[i])){
                     swapTowns(solutionC, i, j);
@@ -347,7 +351,7 @@ void TownsTSP::tabuSearch(int tt)
 
                 /*come back to initial solution*/
                 swapTowns(solutionC, i, j);
-            }
+
         }
 
         /*add the move to tabu*/
@@ -369,17 +373,18 @@ void TownsTSP::tabuSearch(int tt)
         else
             iterations++;
 
-        if(iterations == 10*map_dim){
+        if(iterations == 500){
             resetSolution(solutionC);
             resetsDone++;
             iterations = 0;
             tabu.resetTabu();
         }
-        if(resetsDone == map_dim/2)
+        if(resetsDone == 25)
             stopCriteria = true;
         tabu.decrementTenure();
+        std::cout<<"resets: " <<resetsDone <<std::endl;
     }
-    //std::cout<<"iteracje: " <<iterations <<std::endl;
+
 }
 
 int* TownsTSP::makeNeighbourPermutation(int* basePermutation, int size, int moveBeg, int moveEnd) {
