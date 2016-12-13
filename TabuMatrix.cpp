@@ -20,3 +20,10 @@ bool TabuMatrix::isTabu(int a, int b) {
         return true;
     return false;
 }
+
+void TabuMatrix::resetTabu() {
+    for (int i = 0; i < size; ++i) {
+        for (int j = 0; j < size; ++j)
+            tabuMatrix[i][j] = 0;
+    }
+}

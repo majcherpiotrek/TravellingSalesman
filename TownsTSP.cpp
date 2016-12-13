@@ -290,9 +290,9 @@ void TownsTSP::tabuSearch(int tt)
 
     /*random initial solution*/
     int* solutionC = new int [map_dim];
-    for (int k = 0; k < map_dim ; ++k)
-        solutionC[k] = k;
-    //memcpy(solutionC,solution, map_dim*sizeof(int));
+    //for (int k = 0; k < map_dim ; ++k)
+        //solutionC[k] = k;
+    memcpy(solutionC,solution, map_dim*sizeof(int));
 
     /*array containing positions of the cities in the solutionC*/
     int* positionsC = new int [map_dim];
@@ -303,6 +303,7 @@ void TownsTSP::tabuSearch(int tt)
     double globalLowest = routeCost(solution);
     double solutionC_cost = routeCost(solutionC);
     int iterations = 0;
+    int resetsDone = 0;
     bool stopCriteria = false;
 
     /*tabu matrix*/
@@ -368,7 +369,13 @@ void TownsTSP::tabuSearch(int tt)
         else
             iterations++;
 
-        if(iterations == 500)
+        if(iterations == 10*map_dim){
+            resetSolution(solutionC);
+            resetsDone++;
+            iterations = 0;
+            tabu.resetTabu();
+        }
+        if(resetsDone == map_dim/2)
             stopCriteria = true;
         tabu.decrementTenure();
     }

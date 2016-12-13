@@ -28,6 +28,7 @@ public:
                     tabuMatrix[i][j]--;
         }
     }
+    void resetTabu();
 };
 
 
