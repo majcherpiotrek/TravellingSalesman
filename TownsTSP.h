@@ -37,11 +37,9 @@ private:
     double** towns_map;
 
     double computeDistance(coords A, coords B);
-    int* makeNeighbourPermutation(int* basePermutation, int size, int moveBeg, int moveEnd);
     void permuteRoute(int* route);
+    void permuteRoute(int* route, TabuMatrix& tabu);
     void swapTowns(int* route, int a, int b);
-    double mval(int* solutionA, int* solutionB);
-    void determineMaxMoves(TabuQueue::Move*& maxMoves, int* positions, int cityCount, TabuQueue& tabu);
 public:
     int* solution;
 
@@ -54,9 +52,11 @@ public:
     double routeCost(int *route);
 
     void performSA();
-    void tabuSearch(int tt);
+    void deterministicTabu(int tt);
+    void randomNeighbourhoodTabu(int tt, int it);
     void resetSolution();
     void resetSolution(int* solution);
+    int getSize(){return this->map_dim;}
 };
 
 

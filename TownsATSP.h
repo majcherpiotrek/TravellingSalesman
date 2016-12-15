@@ -11,10 +11,12 @@
 #include <fstream>
 #include <sstream>
 #include <math.h>
+#include <float.h>
 #include <time.h>
 #include <string.h>
 #include <cstdlib>
-
+#include "TabuMatrix.h"
+#include "TabuQueue.h"
 
 class TownsATSP
 {
@@ -31,6 +33,7 @@ private:
 
     int* getNeighbourPermutation(int* basePermutation, int size);
     void permuteRoute(int* route);
+    void permuteRoute(int* route, TabuMatrix& tabu);
 
 
 public:
@@ -45,9 +48,12 @@ public:
     int routeCost(int *route);
 
     void performSA();
-    void tabuSearch(int iterations);
+    void deterministicTabu(int iterations);
+    void randomNeighbourhoodTabu(int tt);
     void resetSolution();
-
+    void swapTowns(int* route, int a, int b);
+    void resetSolution(int* solution);
+    int getSize(){ return this->map_dim;}
 };
 
 

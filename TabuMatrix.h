@@ -16,7 +16,7 @@ public:
 
 
     void addMove(int a, int b){
-        tabuMatrix[a][b] += tabuTenure;
+        tabuMatrix[a][b] = tabuTenure;
     }
 
     bool isTabu(int a, int b);
