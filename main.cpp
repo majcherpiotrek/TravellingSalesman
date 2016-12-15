@@ -31,7 +31,7 @@ int main()
 
 
             START = clock();
-            townsT.deterministicTabu(3 * townsT.getSize());
+            townsT.deterministicTabu(3 * townsT.getSize(), 100);
             STOP = clock();
 
             tT = (double)(STOP - START)/CLOCKS_PER_SEC*1000;

@@ -52,8 +52,8 @@ public:
     double routeCost(int *route);
 
     void performSA();
-    void deterministicTabu(int tt);
-    void randomNeighbourhoodTabu(int tt, int it);
+    void deterministicTabu(int tt, int it);
+    void randomNeighbourhoodTabu(int tt);
     void resetSolution();
     void resetSolution(int* solution);
     int getSize(){return this->map_dim;}
