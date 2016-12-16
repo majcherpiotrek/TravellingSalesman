@@ -23,7 +23,7 @@ int main()
         double TT[] = {0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.5,3.0,3.5};
         clock_t START, STOP;
         double tT;
-        for(int j=0; j<11; j++) {
+        /*for(int j=0; j<11; j++) {
 
             std::cout<<"iterations: " << it[j] <<std::endl;
             for (int i = 0; i < 30; i++) {
@@ -67,7 +67,17 @@ int main()
     file << std::endl;
     for(int i=0; i<11; i++)
         file << times[i] << ";";
-    file.close();
+    file.close();*/
+    START = clock();
+    townsT.deterministicTabu((int)(1.5*townsT.getSize()), 200);
+    STOP = clock();
+
+    tT = (double)(STOP-START)/CLOCKS_PER_SEC*1000;
+    results = townsT.routeCost(townsT.solution);
+    optCost = townsT.getOptCost();
+    mistake = (results - optCost) / (double) optCost;
+    mistake *= 100;
+    std::cout << "opt: " << optCost << " result: " << results << " mistake: " << mistake << " time: "<< tT << std::endl;
 
 
     return 0;

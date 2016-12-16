@@ -336,7 +336,8 @@ void TownsTSP::deterministicTabu(int tt, int it)
         /*find best neighbour of solutionC*/
         double neighbourhoodLowest = DBL_MAX;
         int bestLeft = -1, bestRight=-1;
-        for (int i = 0; i < map_dim - 1; ++i) {
+
+        for (int i = 0; i < map_dim - 1 ; ++i) {
             for (int j = i + 1; j < map_dim; ++j) {
 
                 /*we check aspiration*/
@@ -353,6 +354,7 @@ void TownsTSP::deterministicTabu(int tt, int it)
                     /*come back to initial solution*/
                     swapTowns(solutionC, i, j);
                     continue;
+
                 }
 
                 swapTowns(solutionC, i, j);
@@ -365,6 +367,7 @@ void TownsTSP::deterministicTabu(int tt, int it)
                     neighbourhoodLowest = tempCost;
                     bestLeft = i;
                     bestRight = j;
+
                 }
 
                 /*come back to initial solution*/
@@ -403,7 +406,7 @@ void TownsTSP::deterministicTabu(int tt, int it)
             delete[] solutionC;
             solutionC = new int [map_dim];
             memcpy(solutionC, solution, map_dim*sizeof(int));
-            for(int i = 0; i < 50; i++)
+            for(int i = 0; i < 10; i++)
                 permuteRoute(solutionC,tabu);
 
             //tabu.resetTabu();
