@@ -291,10 +291,6 @@ void TownsATSP::deterministicTabu(int tt) {
     //solutionC[k] = k;
     memcpy(solutionC,solution, map_dim*sizeof(int));
 
-    /*array containing positions of the cities in the solutionC*/
-    int* positionsC = new int [map_dim];
-    for (int i = 0; i < map_dim; ++i)
-        positionsC[solutionC[i]] = i;
 
     /*global best solution cost*/
     double globalLowest = routeCost(solution);
@@ -351,9 +347,7 @@ void TownsATSP::deterministicTabu(int tt) {
             iterations++;
         /*add the move to tabu*/
         tabu.addMove(solutionC[bestLeft], solutionC[bestRight]);
-        /*update the positions list*/
-        positionsC[solutionC[bestLeft]] = bestRight;
-        positionsC[solutionC[bestRight]] = bestLeft;
+        tabu.addMove(solutionC[bestRight], solutionC[bestLeft]);
         swapTowns(solutionC, bestLeft, bestRight);
         solutionC_cost = neighbourhoodLowest;
 

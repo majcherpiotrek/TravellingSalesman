@@ -53,7 +53,7 @@ public:
 
     void performSA();
     void deterministicTabu(int tt, int it);
-    void randomNeighbourhoodTabu(int tt);
+    void randomNeighbourhoodTabu(int tt, int it);
     void resetSolution();
     void resetSolution(int* solution);
     int getSize(){return this->map_dim;}

@@ -391,8 +391,8 @@ void TownsTSP::deterministicTabu(int tt, int it)
             solution = new int[map_dim];
             memcpy(solution, solutionC, map_dim * sizeof(int));
             globalLowest = solutionC_cost;
-            if(resetsDone > 0)
-                std::cout <<"poprawa po resecie TSP nr" << resetsDone << std::endl;
+            //if(resetsDone > 0)
+                //std::cout <<"poprawa po resecie TSP nr" << resetsDone << std::endl;
         }
 
 
@@ -403,15 +403,15 @@ void TownsTSP::deterministicTabu(int tt, int it)
             delete[] solutionC;
             solutionC = new int [map_dim];
             memcpy(solutionC, solution, map_dim*sizeof(int));
-            for(int i = 0; i < 10; i++)
+            for(int i = 0; i < 50; i++)
                 permuteRoute(solutionC,tabu);
 
             //tabu.resetTabu();
-            std::cout<<"reset nr "<< resetsDone << "/"<<30<< std::endl;
+            //std::cout<<"reset nr "<< resetsDone << "/"<<30<< std::endl;
             solutionC_cost = routeCost(solutionC);
 
         }
-        if(resetsDone == 5)
+        if(resetsDone == 10)
             stopCriteria = true;
         tabu.decrementTenure();
     }
@@ -435,7 +435,7 @@ void TownsTSP::swapTowns(int* route, int a, int b) {
     route[b] = buf;
 }
 
-void TownsTSP::randomNeighbourhoodTabu(int tt)
+void TownsTSP::randomNeighbourhoodTabu(int tt, int it)
 {
     /*random initial solution*/
     int* solutionC = new int [map_dim];
@@ -465,7 +465,7 @@ void TownsTSP::randomNeighbourhoodTabu(int tt)
         TabuMatrix* localTabu = new TabuMatrix(map_dim,1);
         //counter for improvement in searching the neighbourhood (how many times we improved the result)
         int improvementCounter = 0;
-        for (int i = 0; i < nSize && improvementCounter < 10*map_dim; ++i) {
+        for (int i = 0; i < nSize && improvementCounter < 3*map_dim; ++i) {
 
                 int a,b;
                 do{
@@ -511,7 +511,7 @@ void TownsTSP::randomNeighbourhoodTabu(int tt)
                 swapTowns(solutionC, a, b);
         }
 
-        if(solutionC_cost - neighbourhoodLowest < 10)
+        if(solutionC_cost - neighbourhoodLowest < 20)
             iterations++;
 
         /*add the move to tabu*/
@@ -528,25 +528,25 @@ void TownsTSP::randomNeighbourhoodTabu(int tt)
             solution = new int[map_dim];
             memcpy(solution, solutionC, map_dim * sizeof(int));
             globalLowest = solutionC_cost;
-            if(resetsDone > 0)
-                std::cout <<"poprawa po resecie TSP nr" << resetsDone << std::endl;
+            //if(resetsDone > 0)
+                //std::cout <<"poprawa po resecie TSP nr" << resetsDone << std::endl;
         }
 
 
         //std::cout<< iterations << std::endl;
-        if(iterations == 20){
+        if(iterations == it){
             resetsDone++;
             iterations = 0;
 
-            for(int i = 0; i < 2*map_dim; i++)
+            for(int i = 0; i < 10; i++)
                 permuteRoute(solutionC,tabu);
 
-            tabu.resetTabu();
-            std::cout<<"reset nr "<< resetsDone << "/"<<50 << std::endl;
+            //tabu.resetTabu();
+            //std::cout<<"reset nr "<< resetsDone << "/"<<50 << std::endl;
             solutionC_cost = routeCost(solutionC);
 
         }
-        if(resetsDone == 50)
+        if(resetsDone == 10)
             stopCriteria = true;
         tabu.decrementTenure();
     }
