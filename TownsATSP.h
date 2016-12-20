@@ -31,10 +31,9 @@ private:
     unsigned short int map_dim; // Liczba miast w instancji problemu
     int** towns_map;
 
-    int* getNeighbourPermutation(int* basePermutation, int size);
     void permuteRoute(int* route);
     void permuteRoute(int* route, TabuMatrix& tabu);
-
+    void swapTowns(int* route, int a, int b);
 
 public:
     int* solution;
@@ -44,15 +43,15 @@ public:
 
     bool loadMap(std::string file_name);
     int getOptCost();
-
     int routeCost(int *route);
-
-    void performSA();
-    void deterministicTabu(int iterations);
-    void randomNeighbourhoodTabu(int tt);
     void resetSolution();
-    void swapTowns(int* route, int a, int b);
-    void resetSolution(int* solution);
+    //algorithms
+    void performSA();
+    void deterministicTabu(int tt, int it);
+    void randomNeighbourhoodTabu(int tt, int it, int nSize);
+
+
+
     int getSize(){ return this->map_dim;}
 };
 

@@ -4,24 +4,70 @@
 
 #include "TownsTSP.h"
 
-TownsTSP::TownsTSP()
-{
+//Private
+double TownsTSP::computeDistance(coords A, coords B) {
+    double xd = B.x - A.x;
+    double yd = B.y - A.y;
+
+    double dist = sqrt(xd*xd + yd*yd);
+
+    return dist;
+}
+void TownsTSP::permuteRoute(int* route) {
+    int a, b;
+
+    a = std::rand()%map_dim;
+    do
+        b = std::rand()%map_dim;
+    while(a == b);
+
+
+    int buf = route[a];
+    route[a] = route[b];
+    route[b] = buf;
+}
+void TownsTSP::permuteRoute(int* route, TabuMatrix& tabu) {
+    int a, b;
+
+    TabuMatrix localTabu = *new TabuMatrix(map_dim,1);
+
+    a = std::rand()%map_dim;
+    do
+        b = std::rand()%map_dim;
+    while(a == b || tabu.isTabu(route[a],route[b]) || localTabu.isTabu(route[a], route[b]));
+
+    localTabu.addMove(route[a], route[b]);
+    localTabu.addMove(route[b], route[a]);
+    tabu.addMove(route[a], route[b]);
+    tabu.addMove(route[b], route[a]);
+
+    int buf = route[a];
+    route[a] = route[b];
+    route[b] = buf;
+
+
+}
+void TownsTSP::swapTowns(int* route, int a, int b) {
+    int buf = route[a];
+    route[a] = route[b];
+    route[b] = buf;
+}
+
+//Public
+TownsTSP::TownsTSP() {
     problem_name = "";
     map_dim = 0;
     coords_list = nullptr;
     towns_map = nullptr;
     solution = nullptr;
 }
-
-TownsTSP::~TownsTSP()
-{
+TownsTSP::~TownsTSP() {
     delete[] coords_list;
     delete[] solution;
     delete[] towns_map;
 }
 
-bool TownsTSP::loadMap(std::string file_name)
-{
+bool TownsTSP::loadMap(std::string file_name) {
     if (file_name[file_name.length() - 1] != *"p" ||
         file_name[file_name.length() - 2] != *"s" ||
         file_name[file_name.length() - 3] != *"t" ||
@@ -146,9 +192,7 @@ bool TownsTSP::loadMap(std::string file_name)
 
     return true;
 }
-
-int TownsTSP::getOptCost()
-{
+int TownsTSP::getOptCost() {
     /* Tworzę strumieñ do odczytu danych z pliku.
         Otwieram go w trybie "std::ios::in", czyli do odczytu.*/
     std::fstream input;
@@ -183,19 +227,7 @@ int TownsTSP::getOptCost()
 
     return -1;
 }
-
-double TownsTSP::computeDistance(coords A, coords B)
-{
-    double xd = B.x - A.x;
-    double yd = B.y - A.y;
-
-    double dist = sqrt(xd*xd + yd*yd);
-
-    return dist;
-}
-
-double TownsTSP::routeCost(int *route)
-{
+double TownsTSP::routeCost(int *route) {
     int cost = 0;
 
     for( int i = 0; i+1 < map_dim; i++)
@@ -203,45 +235,12 @@ double TownsTSP::routeCost(int *route)
 
     return cost;
 }
-
-void TownsTSP::permuteRoute(int* route)
-{
-    int a, b;
-
-    a = std::rand()%map_dim;
-    do
-        b = std::rand()%map_dim;
-    while(a == b);
-
-
-    int buf = route[a];
-    route[a] = route[b];
-    route[b] = buf;
+void TownsTSP::resetSolution() {
+    for(int j = 0; j < this->map_dim; j++)
+        permuteRoute(this->solution);
 }
-
-void TownsTSP::permuteRoute(int* route, TabuMatrix& tabu)
-{
-    int a, b;
-
-    TabuMatrix localTabu = *new TabuMatrix(map_dim,1);
-
-    a = std::rand()%map_dim;
-    do
-        b = std::rand()%map_dim;
-    while(a == b || tabu.isTabu(route[a],route[b]) || localTabu.isTabu(route[a], route[b]));
-
-    localTabu.addMove(route[a], route[b]);
-    localTabu.addMove(route[b], route[a]);
-
-    int buf = route[a];
-    route[a] = route[b];
-    route[b] = buf;
-
-
-}
-
-void TownsTSP::performSA()
-{
+//algorithms
+void TownsTSP::performSA() {
 
     int* s_prim = new int[map_dim];
     int* s = new int[map_dim];
@@ -304,65 +303,58 @@ void TownsTSP::performSA()
     delete[] s;
     return;
 }
-
-void TownsTSP::deterministicTabu(int tt, int it)
-{
-    /*Local search*/
-
-    /*random initial solution*/
+void TownsTSP::deterministicTabu(int tt, int it) {
+    //random initial solution
     int* solutionC = new int [map_dim];
-    //for (int k = 0; k < map_dim ; ++k)
-        //solutionC[k] = k;
     memcpy(solutionC,solution, map_dim*sizeof(int));
 
-    /*array containing positions of the cities in the solutionC*/
+    //array containing positions of the cities in the solutionC
     int* positionsC = new int [map_dim];
     for (int i = 0; i < map_dim; ++i)
         positionsC[solutionC[i]] = i;
 
-    /*global best solution cost*/
+    //global best solution cost
     double globalLowest = routeCost(solution);
     double solutionC_cost = routeCost(solutionC);
-
     int iterations = 0;
     int resetsDone = 0;
     bool stopCriteria = false;
 
-    /*tabu matrix*/
-    int tabuTenure = tt;
-    TabuMatrix tabu = *new TabuMatrix(map_dim, tabuTenure);
+    //tabu matrix
+    TabuMatrix tabu = *new TabuMatrix(map_dim, tt);
 
     while(!stopCriteria) {
-        /*find best neighbour of solutionC*/
+
         double neighbourhoodLowest = DBL_MAX;
         int bestLeft = -1, bestRight=-1;
 
+        ///Find best solution in the neighbourhood of solutionC (neighbourhood is all possible town swaps in solutionC)
         for (int i = 0; i < map_dim - 1 ; ++i) {
             for (int j = i + 1; j < map_dim; ++j) {
 
-                /*we check aspiration*/
-                if(tabu.isTabu(solutionC[i], solutionC[j])){
-                    swapTowns(solutionC, i, j);
-                    /*calculating the cost of neighbour solution*/
+                //we check aspiration
+                if(tabu.isTabu(i,j)){
+                    swapTowns(solutionC,positionsC[i], positionsC[j]);
+                    //calculating the cost of neighbour solution
                     double tempCost = routeCost(solutionC);
-                    /*if move on tabu leads to solution better then ever*/
+                    //if move on tabu leads to solution better then ever
                     if(tempCost < globalLowest && tempCost < neighbourhoodLowest){
                         neighbourhoodLowest = tempCost;
                         bestLeft = i;
                         bestRight = j;
                     }
-                    /*come back to initial solution*/
-                    swapTowns(solutionC, i, j);
+                    //come back to initial solution
+                    swapTowns(solutionC, positionsC[i], positionsC[j]);
                     continue;
 
                 }
 
-                swapTowns(solutionC, i, j);
-                /*calculating the cost of neighbour solution*/
+                swapTowns(solutionC, positionsC[i], positionsC[j]);
+                //calculating the cost of neighbour solution
                 double tempCost = routeCost(solutionC);
 
 
-                /*if the move leads to the currently best solution in neighbourhood then save it as currently best*/
+                //if the move leads to the currently best solution in neighbourhood then save it as currently best
                 if (tempCost < neighbourhoodLowest) {
                     neighbourhoodLowest = tempCost;
                     bestLeft = i;
@@ -370,36 +362,35 @@ void TownsTSP::deterministicTabu(int tt, int it)
 
                 }
 
-                /*come back to initial solution*/
-                swapTowns(solutionC, i, j);
+                //come back to initial solution
+                swapTowns(solutionC, positionsC[i], positionsC[j]);
             }
         }
 
         if(solutionC_cost - neighbourhoodLowest < 20)
             iterations++;
 
-        /*add the move to tabu*/
-        tabu.addMove(solutionC[bestLeft], solutionC[bestRight]);
-        tabu.addMove(solutionC[bestRight], solutionC[bestLeft]);
-        /*update the positions list*/
-        positionsC[solutionC[bestLeft]] = bestRight;
-        positionsC[solutionC[bestRight]] = bestLeft;
-        swapTowns(solutionC, bestLeft, bestRight);
+        //add the move to tabu
+        tabu.addMove(bestLeft, bestRight);
+        tabu.addMove(bestRight, bestLeft);
+
+        //update the positions list
+        int buf = positionsC[bestLeft];
+        positionsC[bestLeft] = positionsC[bestRight];
+        positionsC[bestRight] = buf;
+        swapTowns(solutionC, positionsC[bestLeft], positionsC[bestRight]);
         solutionC_cost = neighbourhoodLowest;
 
 
-        /*if solutionC is now better then global best solution, then update the global best*/
+        //if solutionC is now better then global best solution, then update the global best
         if (solutionC_cost < globalLowest) {
             delete[] solution;
             solution = new int[map_dim];
             memcpy(solution, solutionC, map_dim * sizeof(int));
             globalLowest = solutionC_cost;
-            //if(resetsDone > 0)
-                //std::cout <<"poprawa po resecie TSP nr" << resetsDone << std::endl;
+
         }
 
-
-        //std::cout<< iterations << std::endl;
         if(iterations == it){
             resetsDone++;
             iterations = 0;
@@ -409,152 +400,127 @@ void TownsTSP::deterministicTabu(int tt, int it)
             for(int i = 0; i < 10; i++)
                 permuteRoute(solutionC,tabu);
 
-            //tabu.resetTabu();
-            //std::cout<<"reset nr "<< resetsDone << "/"<<30<< std::endl;
             solutionC_cost = routeCost(solutionC);
 
         }
-        if(resetsDone == 10)
+        if(resetsDone == 5)
             stopCriteria = true;
         tabu.decrementTenure();
     }
-    //std::cout<<"iteracje: " <<iterations <<std::endl;
 }
-
-
-void TownsTSP::resetSolution() {
-    for(int j = 0; j < this->map_dim; j++)
-        permuteRoute(this->solution);
-}
-
-void TownsTSP::resetSolution(int* solution) {
-    for(int j = 0; j < this->map_dim; j++)
-        permuteRoute(solution);
-}
-
-void TownsTSP::swapTowns(int* route, int a, int b) {
-    int buf = route[a];
-    route[a] = route[b];
-    route[b] = buf;
-}
-
-void TownsTSP::randomNeighbourhoodTabu(int tt, int it)
-{
-    /*random initial solution*/
+void TownsTSP::randomNeighbourhoodTabu(int tt, int it, int nSize) {
+    //random initial solution
     int* solutionC = new int [map_dim];
-    //for (int k = 0; k < map_dim ; ++k)
-    //solutionC[k] = k;
     memcpy(solutionC,solution, map_dim*sizeof(int));
 
-    /*global best solution cost*/
+    //array containing positions of the cities in the solutionC
+    int* positionsC = new int [map_dim];
+    for (int i = 0; i < map_dim; ++i)
+        positionsC[solutionC[i]] = i;
+
+    //global best solution cost
     double globalLowest = routeCost(solution);
     double solutionC_cost = routeCost(solutionC);
+
     int iterations = 0;
     int resetsDone = 0;
     bool stopCriteria = false;
 
-    /*tabu matrix*/
-    int tabuTenure = tt;
-    TabuMatrix tabu = *new TabuMatrix(map_dim, tabuTenure);
+    //tabu matrix
+    TabuMatrix tabu = *new TabuMatrix(map_dim, tt);
 
     while(!stopCriteria) {
-        /*find best neighbour of solutionC*/
+
         double neighbourhoodLowest = DBL_MAX;
         int bestLeft = -1, bestRight=-1;
 
-        //neighbourhood size
-        int nSize = (int)(0.5*map_dim*(map_dim-1));
-        //local Tabu for searching neighbours
-        TabuMatrix* localTabu = new TabuMatrix(map_dim,1);
-        //counter for improvement in searching the neighbourhood (how many times we improved the result)
-        int improvementCounter = 0;
-        for (int i = 0; i < nSize && improvementCounter < 3*map_dim; ++i) {
+        ///Find best solution in the neighbourhood of solutionC (neighbourhood is nSize random town swaps)
+        for (int i = 0; i < nSize; ++i) {
 
-                int a,b;
-                do{
-                    a=rand()%map_dim;
-                    b=rand()%map_dim;
-                }while( a==b || localTabu->isTabu(a, b));
+            int a;
+            int b;
+            do{
+                a = rand()%map_dim;
+                b = rand()%map_dim;
+            }while(a == b && !tabu.isTabu(a,b) );
 
-                //we forbid these moves so we get new random moves from the neighbourhood
-                localTabu->addMove(a,b);
-                localTabu->addMove(b,a);
-
-                /*we check aspiration*/
-                if(tabu.isTabu(solutionC[a], solutionC[b])){
-                    swapTowns(solutionC, a, b);
-                    /*calculating the cost of neighbour solution*/
-                    double tempCost = routeCost(solutionC);
-                    /*if move on tabu leads to solution better then ever*/
-                    if(tempCost <= globalLowest && tempCost <= neighbourhoodLowest){
-                        neighbourhoodLowest = tempCost;
-                        bestLeft = a;
-                        bestRight = b;
-                    }
-                    /*come back to initial solution*/
-                    swapTowns(solutionC, a, b);
-                    continue;
-                }
-
-                swapTowns(solutionC, a, b);
-                /*calculating the cost of neighbour solution*/
+            //we check aspiration
+            if(tabu.isTabu(solutionC[positionsC[a]], solutionC[positionsC[b]])) {
+               swapTowns(solutionC, positionsC[a], positionsC[b]);
+                //calculating the cost of neighbour solution
                 double tempCost = routeCost(solutionC);
-
-
-                /*if the move leads to the currently best solution in neighbourhood then save it as currently best*/
-                if (tempCost <= neighbourhoodLowest) {
+                //if move on tabu leads to solution better then ever
+                if (tempCost < globalLowest && tempCost < neighbourhoodLowest) {
                     neighbourhoodLowest = tempCost;
                     bestLeft = a;
                     bestRight = b;
-
                 }
-                else
-                    improvementCounter++;
-                /*come back to initial solution*/
-                swapTowns(solutionC, a, b);
+                //come back to initial solution
+                swapTowns(solutionC, positionsC[a], positionsC[b]);
+                continue;
+            }
+
+            swapTowns(solutionC, positionsC[a], positionsC[b]);
+            //calcule the cost of neighbour solution
+            double tempCost = routeCost(solutionC);
+
+
+            //if the move leads to the currently best solution in neighbourhood then save it as currently best
+            if (tempCost < neighbourhoodLowest) {
+                neighbourhoodLowest = tempCost;
+                bestLeft = a;
+                bestRight = b;
+
+            }
+
+            //come back to initial solution
+            swapTowns(solutionC, positionsC[a], positionsC[b]);
         }
 
         if(solutionC_cost - neighbourhoodLowest < 20)
             iterations++;
 
-        /*add the move to tabu*/
-        tabu.addMove(solutionC[bestLeft], solutionC[bestRight]);
-        tabu.addMove(solutionC[bestRight], solutionC[bestLeft]);
+        //Add the move to tabu
+        tabu.addMove(bestLeft, bestRight);
+        tabu.addMove(bestRight, bestLeft);
+        swapTowns(solutionC, positionsC[bestLeft], positionsC[bestRight]);
 
-        swapTowns(solutionC, bestLeft, bestRight);
+        //Update the positions list
+        int buf = positionsC[bestLeft];
+        positionsC[bestLeft] = positionsC[bestRight];
+        positionsC[bestRight] = buf;
+
         solutionC_cost = neighbourhoodLowest;
 
 
-        /*if solutionC is now better then global best solution, then update the global best*/
+        //if solutionC is now better then global best solution, then update the global best
         if (solutionC_cost < globalLowest) {
             delete[] solution;
             solution = new int[map_dim];
             memcpy(solution, solutionC, map_dim * sizeof(int));
             globalLowest = solutionC_cost;
-            //if(resetsDone > 0)
-                //std::cout <<"poprawa po resecie TSP nr" << resetsDone << std::endl;
         }
 
-
-        //std::cout<< iterations << std::endl;
         if(iterations == it){
             resetsDone++;
             iterations = 0;
-
+            delete[] solutionC;
+            solutionC = new int [map_dim];
+            memcpy(solutionC, solution, map_dim*sizeof(int));
             for(int i = 0; i < 10; i++)
                 permuteRoute(solutionC,tabu);
 
-            //tabu.resetTabu();
-            //std::cout<<"reset nr "<< resetsDone << "/"<<50 << std::endl;
             solutionC_cost = routeCost(solutionC);
 
         }
-        if(resetsDone == 10)
+        if(resetsDone == 5)
             stopCriteria = true;
         tabu.decrementTenure();
     }
-    //std::cout<<"iteracje: " <<iterations <<std::endl;
 }
+
+
+
 
 
 

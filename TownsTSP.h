@@ -48,15 +48,15 @@ public:
 
     bool loadMap(std::string file_name);
     int getOptCost();
-
     double routeCost(int *route);
-
+    void resetSolution();
+    int getSize(){return this->map_dim;}
+    //algoritms
     void performSA();
     void deterministicTabu(int tt, int it);
-    void randomNeighbourhoodTabu(int tt, int it);
-    void resetSolution();
-    void resetSolution(int* solution);
-    int getSize(){return this->map_dim;}
+    void randomNeighbourhoodTabu(int tt, int it, int nSize);
+
+
 };
 
 

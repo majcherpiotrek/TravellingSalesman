@@ -1,84 +1,256 @@
+#include "Menu.h"
 #include "TownsTSP.h"
 #include "TownsATSP.h"
 #include <ctime>
-#include <fstream>
 
 int main()
 {
+    Menu main_menu = *(new Menu());
 
-    std::string fileName[] = {"berlin52.tsp", "ch130.tsp", "a280.tsp"};
-    std::string fileNameATSP[] = {"ftv35.atsp", "ft70.atsp", "ftv170.atsp"};
-    int whichInstance = 0;
-        TownsTSP townsT = *(new TownsTSP());
-        townsT.loadMap(fileName[whichInstance]);
+    main_menu.add("PIOTR MAJCHER - PROJEKT PEA - PROBLEM KOMIWOJAZERA\n");
+    main_menu.add("MENU GLOWNE\n");
+    main_menu.add("***************************************************************************\n\n(r) Odswiez widok menu.\n");
+    main_menu.add("(1) Symulowane wyzarzanie - ATSP\n");
+    main_menu.add("(2) Symulowane wyzarzanie - TSP\n");
+    main_menu.add("(3) Tabu search deterministyczny - ATSP\n");
+    main_menu.add("(4) Tabu search deterministyczny - TSP\n");
+    main_menu.add("(5) Tabu search losowe sasiedztwo- ATSP\n");
+    main_menu.add("(6) Tabu search losowe sasiedztwo - TSP\n");
 
-        double results = 0;
-        double mistake = 0;
-        int optCost = townsT.getOptCost();
+    main_menu.add("\n(k) Zakoncz program ... ");
 
-        double mistakes[11];
-        double times[11];
+    bool end = false;
+    bool bad_command = false;
 
-        int it[] = {100,150,200,250,300,350,400,450,500,550,600};
-        double TT[] = {0.25,0.5,0.75,1,1.25,1.5,1.75,2,2.5,3.0,3.5};
-        clock_t START, STOP;
-        double tT;
-        /*for(int j=0; j<11; j++) {
+    std::cout << main_menu;
 
-            std::cout<<"iterations: " << it[j] <<std::endl;
-            for (int i = 0; i < 30; i++) {
+    while(!end)
+    {
+        if (bad_command)
+        {
+            std::cout << "Bledny numer opcji! Twoj wybor-> ";
+            bad_command = false;
+        }
+        else
+            std::cout << "\nTwoj wybor -> ";
 
-                std::cout<< i << std::endl;
-                START = clock();
-                townsT.deterministicTabu((int)(TT[j]*townsT.getSize()), 200);
-                STOP = clock();
+        std::cin.clear();
+        std::cin.sync();
 
-                tT += (double) (STOP - START) / CLOCKS_PER_SEC * 1000;
+        char decision;
+        std::cin >> decision;
 
-
-                results = townsT.routeCost(townsT.solution);
-                mistake += (results - optCost) / (double) optCost;
-                townsT.resetSolution();
-
+        switch(decision)
+        {
+            case 'r':
+            {
+                //odswiez ekran
+                system("clear");
+                std::cout << main_menu;
+                break;
             }
 
-            mistake *= 100;
-            mistake = mistake/30;
+            case '1':
+            {
+                std::cout << "\nInstancje problemu ATSP:\nftv35.atsp\nft70.atsp\nftv170.atsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
+                std::string nazwa;
+                std::cin >> nazwa;
 
-            tT = tT/30;
+                TownsATSP atsp = *(new TownsATSP());
+                if(atsp.loadMap(nazwa))
+                {
+                    double optCost = atsp.getOptCost();
+                    clock_t START, STOP;
+                    double t;
+                    std::cout << std::endl << std::endl;
+                    double wynik;
 
-            mistakes[j] = mistake;
-            times[j] = tT;
+                    START=clock();
+                    atsp.performSA();
+                    STOP=clock();
 
-            mistake = 0;
-            tT = 0;
+                    t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
+                    wynik = atsp.routeCost(atsp.solution);
 
+                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
+                    std::cout << "Koszt rozwiazania optymalnego: " << optCost << std::endl;
+                    std::cout << "Błąd: " << 100*((wynik-optCost)/optCost) << "%" << std::endl;
+                    std::cout << "Czas wykonania: " << t << " ms" << std::endl;
+                }
+                break;
+            }
+
+            case '2':
+            {
+                std::cout << "\nInstancje problemu TSP:\nberlin52.tsp\nch130.tsp\na280.tsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
+                std::string nazwa;
+                std::cin >> nazwa;
+
+                TownsTSP tsp = *(new TownsTSP());
+                if(tsp.loadMap(nazwa))
+                {
+                    double optCost = tsp.getOptCost();
+                    clock_t START, STOP;
+                    double t;
+                    std::cout << std::endl << std::endl;
+                    double wynik;
+
+                    START = clock();
+                    tsp.performSA();
+                    STOP = clock();
+
+                    t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
+                    wynik = tsp.routeCost(tsp.solution);
+
+                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
+                    std::cout << "Koszt rozwiazania optymalnego: " << optCost << std::endl;
+                    std::cout << "Błąd: " << 100*((wynik-optCost)/optCost) << "%" << std::endl;
+                    std::cout << "Czas wykonania: " << t << " ms" << std::endl;
+                }
+
+                break;
+            }
+
+            case '3':
+            {
+                std::cout << "\nInstancje problemu ATSP:\nftv35.atsp\nft70.atsp\nftv170.atsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
+                std::string nazwa;
+                std::cin >> nazwa;
+
+                TownsATSP atsp = *(new TownsATSP());
+                if(atsp.loadMap(nazwa))
+                {
+                    double optCost = atsp.getOptCost();
+                    clock_t START, STOP;
+                    double t;
+                    std::cout << std::endl << std::endl;
+                    std::cout << "Kadencja 1.5: " << (int)(1.5*atsp.getSize()) << std::endl;
+                    std::cout << "Kryterium resetu (iteracje): 400" <<std::endl;
+                    std::cout << "Kryterium zatrzymania (liczba resetów) : 5" << std::endl;
+                    double wynik;
+                    START =clock();
+                    atsp.deterministicTabu((int)(1.5*atsp.getSize()), 400);
+                    STOP =clock();
+
+                    t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
+                    wynik = atsp.routeCost(atsp.solution);
+
+                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
+                    std::cout << "Koszt rozwiazania optymalnego: " << optCost << std::endl;
+                    std::cout << "Błąd: " << 100*((wynik-optCost)/optCost) << "%" << std::endl;
+                    std::cout << "Czas wykonania: " << t << " ms" << std::endl;
+                }
+                break;
+            }
+
+            case '4':
+            {
+                std::cout << "\nInstancje problemu TSP:\nberlin52.tsp\nch130.tsp\na280.tsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
+                std::string nazwa;
+                std::cin >> nazwa;
+
+                TownsTSP tsp = *(new TownsTSP());
+                if(tsp.loadMap(nazwa))
+                {
+                    double optCost = tsp.getOptCost();
+                    clock_t START, STOP;
+                    double t;
+                    std::cout << std::endl << std::endl;
+                    std::cout << "Kadencja 1.5: " << (int)(1.5*tsp.getSize()) << std::endl;
+                    std::cout << "Kryterium resetu (iteracje): 400" <<std::endl;
+                    std::cout << "Kryterium zatrzymania (liczba resetów) : 5" << std::endl;
+                    double wynik;
+                    START =clock();
+                    tsp.deterministicTabu((int)(1.5*tsp.getSize()), 400);
+                    STOP = clock();
+
+                    t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
+                    wynik = tsp.routeCost(tsp.solution);
+
+                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
+                    std::cout << "Koszt rozwiazania optymalnego: " << optCost << std::endl;
+                    std::cout << "Błąd: " << 100*((wynik-optCost)/optCost) << "%" << std::endl;
+                    std::cout << "Czas wykonania: " << t << " ms" << std::endl;
+                }
+
+                break;
+            }
+
+            case '5':
+            {
+                std::cout << "\nInstancje problemu ATSP:\nftv35.atsp\nft70.atsp\nftv170.atsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
+                std::string nazwa;
+                std::cin >> nazwa;
+
+                TownsATSP atsp = *(new TownsATSP());
+                if(atsp.loadMap(nazwa))
+                {
+                    double optCost = atsp.getOptCost();
+                    clock_t START, STOP;
+                    double t;
+                    std::cout << std::endl << std::endl;
+                    std::cout << "Kadencja 1.5: " << (int)(1.5*atsp.getSize()) << std::endl;
+                    std::cout << "Kryterium resetu (iteracje): 600" <<std::endl;
+                    std::cout << "Kryterium zatrzymania (liczba resetów) : 5" << std::endl;
+                    double wynik;
+                    START =clock();
+                    atsp.randomNeighbourhoodTabu((int)(1.5*atsp.getSize()), 600, 3*atsp.getSize());
+                    STOP =clock();
+
+                    t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
+                    wynik = atsp.routeCost(atsp.solution);
+
+                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
+                    std::cout << "Koszt rozwiazania optymalnego: " << optCost << std::endl;
+                    std::cout << "Błąd: " << 100*((wynik-optCost)/optCost) << "%" << std::endl;
+                    std::cout << "Czas wykonania: " << t << " ms" << std::endl;
+                }
+                break;
+            }
+
+            case '6':
+            {
+                std::cout << "\nInstancje problemu TSP:\nberlin52.tsp\nch130.tsp\na280.tsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
+                std::string nazwa;
+                std::cin >> nazwa;
+
+                TownsTSP tsp = *(new TownsTSP());
+                if(tsp.loadMap(nazwa))
+                {
+                    double optCost = tsp.getOptCost();
+                    clock_t START, STOP;
+                    double t;
+                    std::cout << std::endl << std::endl;
+                    std::cout << "Kadencja 1.5: " << (int)(1.5*tsp.getSize()) << std::endl;
+                    std::cout << "Kryterium resetu (iteracje): 600" <<std::endl;
+                    std::cout << "Kryterium zatrzymania (liczba resetów) : 5" << std::endl;
+                    double wynik;
+                    START =clock();
+                    tsp.randomNeighbourhoodTabu((int)(1.5*tsp.getSize()), 600, 3*tsp.getSize());
+                    STOP = clock();
+
+                    t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
+                    wynik = tsp.routeCost(tsp.solution);
+
+                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
+                    std::cout << "Koszt rozwiazania optymalnego: " << optCost << std::endl;
+                    std::cout << "Błąd: " << 100*((wynik-optCost)/optCost) << "%" << std::endl;
+                    std::cout << "Czas wykonania: " << t << " ms" << std::endl;
+                }
+
+                break;
+            }
+
+            case 'k':
+            {
+                end = true;
+                break;
+            }
+
+            default:
+                bad_command = true;
         }
-
-
-    std::fstream file;
-    std::string name = "test_results/berlin52_iterations_test.csv";
-    file.open(name, std::ios::out);
-    for(int i=0; i<11; i++)
-        file << TT[i] << ";";
-    file << std::endl;
-    for(int i=0; i<11; i++)
-        file << mistakes[i] << ";";
-    file << std::endl;
-    for(int i=0; i<11; i++)
-        file << times[i] << ";";
-    file.close();*/
-    START = clock();
-    townsT.deterministicTabu((int)(1.5*townsT.getSize()), 200);
-    STOP = clock();
-
-    tT = (double)(STOP-START)/CLOCKS_PER_SEC*1000;
-    results = townsT.routeCost(townsT.solution);
-    optCost = townsT.getOptCost();
-    mistake = (results - optCost) / (double) optCost;
-    mistake *= 100;
-    std::cout << "opt: " << optCost << " result: " << results << " mistake: " << mistake << " time: "<< tT << std::endl;
-
+    }
 
     return 0;
 }
