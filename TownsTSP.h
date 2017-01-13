@@ -55,7 +55,7 @@ public:
     void performSA();
     void deterministicTabu(int tt, int it);
     void randomNeighbourhoodTabu(int tt, int it, int nSize);
-
+    void genetic();
 
 };
 
