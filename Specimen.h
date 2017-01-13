@@ -10,14 +10,18 @@ class Specimen {
 private:
     int* chromosome;
     int genesNum;
+    double routeCost;
 public:
     Specimen(int genesNum);
     ~Specimen(){if(chromosome != nullptr)delete[] chromosome;}
 
-    void decodeChromosome(int&* root, int&* routeFromChromosome);
+    void decodeChromosome(int* root, int* routeFromChromosome);
     void setChromosome(int* chromosome);
-    void getChromosome(int&* chromosome);
-
+    void getChromosome(int* chromosome);
+    int getGenesNum(){ return  this->genesNum;}
+    double getCost(){return this->routeCost;}
+    void setRouteCost(double cost){this->routeCost = cost;}
+    int* getChromosome(){ return this->chromosome;}
 
 };
 

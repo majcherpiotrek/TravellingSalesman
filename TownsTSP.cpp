@@ -519,6 +519,147 @@ void TownsTSP::randomNeighbourhoodTabu(int tt, int it, int nSize) {
     }
 }
 
+void TownsTSP::genetic(int generations, double elitarismFactor) {
+
+    int genesNum = this->map_dim;
+
+    //zapisanie bazowego rozwiązania, potrzebnego do dekodowania chromosomów
+    int* root = new int[genesNum];
+    memcpy(root, this->solution, genesNum*sizeof(int));
+
+    int populationSize = 10;
+
+    //utworzenie populacji początkowej
+    Specimen** initialPopulation = new Specimen*[populationSize];
+    //utworzenie póki co pustej następnej populacji
+    Specimen** nextGeneration = new Specimen*[populationSize];
+
+    //liczba przepisywanych do następnej populacji najlepszych rozwiązań
+    int elitSize = (int)(elitarismFactor*populationSize);
+
+    for (int i = 0; i < populationSize; ++i)
+        initialPopulation[i] = new Specimen(genesNum);
+    generateRandomPopulation(initialPopulation, populationSize);
+
+    for (int gen = 0; gen < generations; ++gen) {
+
+        //policzenie kosztów dróg dla każdego osobnika
+        for (int i = 0; i < populationSize; ++i) {
+
+
+            //zapisanie kosztu drogi dla danego osobnika
+            double specimenRouteCost = getSpecimenRouteCost(initialPopulation[i], root);
+            initialPopulation[i]->setRouteCost(specimenRouteCost);
+
+            //sortowanie
+            if (i > 0) {
+                int head = i;
+                while (head >= 1 && initialPopulation[head]->getCost() < initialPopulation[head - 1]->getCost()) {
+                    Specimen* buf = initialPopulation[head];
+                    initialPopulation[head] = initialPopulation[head - 1];
+                    initialPopulation[head - 1] = buf;
+                    head--;
+                }
+            }
+
+        }
+
+        if(initialPopulation[0]->getCost() < routeCost(this->solution))
+            initialPopulation[0]->decodeChromosome(root,this->solution);
+
+
+        //robienie dzieci dla pozostałej cześci nowej populacji
+        for(int i=elitSize, j=0; i<populationSize-1;){
+            if(j<elitSize){
+                nextGeneration[j] = initialPopulation[j];
+                j++;
+            }
+            Specimen* parent1 = tournament(initialPopulation,populationSize,2);
+            Specimen* parent2 = tournament(initialPopulation,populationSize,2);
+
+            Specimen* child1;
+            Specimen* child2;
+            child1 = new Specimen(genesNum);
+            child2 = new Specimen(genesNum);
+            crossover(parent1,parent2, child1, child2,genesNum);
+
+            nextGeneration[i] = child1;
+            if(i+1 < populationSize)
+                nextGeneration[i+1] = child2;
+            i=i+2;
+        }
+
+        memcpy(initialPopulation, nextGeneration, populationSize*sizeof(Specimen*));
+
+        /*std::cout << "NEXT GENERATION" << std::endl;
+        for (int k = 0; k < populationSize; k++){
+            int* chromosome = new int[genesNum];
+            nextGeneration[k]->decodeChromosome(root, chromosome);
+            for(int m = 0; m < genesNum; m++)
+                std::cout<<chromosome[m]<< " ";
+            std::cout<<std::endl;
+            delete[] chromosome;
+        }
+        std::cout << "NEXT GENERATION" << std::endl;
+        */
+    }
+}
+
+void TownsTSP::generateRandomPopulation(Specimen **population, int populationSize) {
+    for (int i = 0; i < populationSize; i++) {
+
+        int genesNum = population[i]->getGenesNum();
+        int chromosome[genesNum];
+
+        for (int j = 0; j < genesNum; j++) {
+            int topBorder = genesNum-j;
+            int gene = rand()%topBorder;
+            chromosome[j] = gene;
+        }
+        population[i]->setChromosome(chromosome);
+    }
+}
+
+double TownsTSP::getSpecimenRouteCost(Specimen *specimen, int *root) {
+    int* route = new int [specimen->getGenesNum()];
+    specimen->decodeChromosome(root, route);
+    double cost = routeCost(route);
+    delete[] route;
+    return cost;
+}
+
+Specimen *TownsTSP::tournament(Specimen **population, int populationSize, int tournamentMembers) {
+    Specimen* best = nullptr;
+    int lowest = populationSize;
+    for (int i = 0; i < tournamentMembers; ++i) {
+        int index = rand()%populationSize;
+        if(index < lowest)
+            lowest = index;
+    }
+
+    best = population[lowest];
+    return best;
+}
+
+void TownsTSP::crossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum) {
+    int crossoverPoint = 1 + rand()%(genesNum-1);
+
+    int* chromosome = new int[genesNum];
+    //pierwsze dziecko
+    memcpy(chromosome, parent1->getChromosome(), crossoverPoint*sizeof(int));
+    memcpy(chromosome+crossoverPoint, parent2->getChromosome()+crossoverPoint, (genesNum-crossoverPoint)*sizeof(int));
+    child1->setChromosome(chromosome);
+
+    //drugie dziecko
+    memcpy(chromosome, parent2->getChromosome(), crossoverPoint*sizeof(int));
+    memcpy(chromosome+crossoverPoint, parent1->getChromosome()+crossoverPoint, (genesNum-crossoverPoint)*sizeof(int));
+    child2->setChromosome(chromosome);
+}
+
+
+
+
+
 
 
 

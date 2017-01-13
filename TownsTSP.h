@@ -17,6 +17,7 @@
 #include <float.h>
 #include "TabuQueue.h"
 #include "TabuMatrix.h"
+#include "Specimen.h"
 
 struct coords
 {
@@ -55,7 +56,11 @@ public:
     void performSA();
     void deterministicTabu(int tt, int it);
     void randomNeighbourhoodTabu(int tt, int it, int nSize);
-    void genetic();
+    void genetic(int generations, double elitarismFactor);
+    void generateRandomPopulation(Specimen** population, int populationSize);
+    double getSpecimenRouteCost(Specimen *specimen, int *root);
+    Specimen* tournament(Specimen** population,int populationSize, int tournamentMembers);
+    void crossover(Specimen* parent1, Specimen* parent2, Specimen* child1, Specimen* child2, int genesNum);
 
 };
 
