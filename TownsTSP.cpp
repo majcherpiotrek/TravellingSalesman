@@ -567,7 +567,7 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
         ///Przystosowanie - ustalenie przystosowań
         for(int i = 0; i<populationSize; i++) {
             initialPopulation[i]->setFitness(populationSize-i);
-            double prob = 100*(double)initialPopulation[i]->getFitness()/(double)fitnessSum;
+            double prob = 1000*(double)initialPopulation[i]->getFitness()/(double)fitnessSum;
             initialPopulation[i]->setMatingProbablitiy((int)floor(prob));
         }
 
@@ -625,6 +625,10 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
                 std::cout<<child2->getChromosome()[i]<< " ";
             std::cout<<std::endl;*/
             ////////////////////////////////////////
+
+           mutate(child1,genesNum,100, 3);
+           mutate(child2,genesNum,100, 3);
+
             nextGeneration[i] = child1;
             if(i+1 < populationSize)
                 nextGeneration[i+1] = child2;
@@ -700,7 +704,7 @@ void TownsTSP::onePointCrossover(Specimen *parent1, Specimen *parent2, Specimen 
 Specimen *TownsTSP::acceptReject(Specimen **population, int populationSize) {
     while(true) {
         int index = rand() % populationSize;
-        int throwDice = rand() % 100;
+        int throwDice = rand() % 1000;
         if (throwDice <= population[index]->getMatingProbablitiy())
             return population[index];
     }
@@ -733,6 +737,17 @@ void TownsTSP::twoPointCrossover(Specimen *parent1, Specimen *parent2, Specimen 
     memcpy(chromosome+firstCrossoverPoint, parent1->getChromosome()+firstCrossoverPoint, secondCrossoverPoint*sizeof(int));
     memcpy(chromosome+firstCrossoverPoint+secondCrossoverPoint, parent2->getChromosome()+firstCrossoverPoint+secondCrossoverPoint, (genesNum-firstCrossoverPoint-secondCrossoverPoint)*sizeof(int));
     child2->setChromosome(chromosome);
+}
+
+void TownsTSP::mutate(Specimen *specimen,int genesNum, int mutationProbability, int mutationsNum) {
+    for (int i = 0; i < mutationsNum; ++i) {
+        int throwDice = rand()%1000;
+        if(throwDice < mutationProbability){
+            int geneToMute = rand()%genesNum;
+            int newGene = rand()%(genesNum-geneToMute);
+            specimen->getChromosome()[geneToMute] = newGene;
+        }
+    }
 }
 
 

@@ -67,6 +67,7 @@ public:
     Specimen* roulette(Specimen** population, int populationSize, int fitnessSum);
     void onePointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum);
     void twoPointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum);
+    void mutate(Specimen* specimen,int genesNum, int mutationProbability, int mutationsNum);
 
 
 };
