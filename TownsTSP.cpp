@@ -519,85 +519,96 @@ void TownsTSP::randomNeighbourhoodTabu(int tt, int it, int nSize) {
     }
 }
 
-void TownsTSP::genetic(int generations, int populationSize, double elitarismFactor, SelectionStrategy strategy) {
+void TownsTSP::genetic(int generations, int populationSize, double elitarismFactor, SelectionStrategy selectionStartegy, CrossoverStrategy crossoverStrategy) {
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///INICJALIZACJA
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
 
+    ///Liczba genów w chromosomie
     int genesNum = this->map_dim;
-
-    //zapisanie bazowego rozwiązania, potrzebnego do dekodowania chromosomów
+    ///Bazowe rozwiązanie - potrzebne do dekodowania chromosomów
     int* root = new int[genesNum];
     memcpy(root, this->solution, genesNum*sizeof(int));
-
-    //utworzenie populacji początkowej
-    Specimen** initialPopulation = new Specimen*[populationSize];
-    //utworzenie póki co pustej następnej populacji
+    ///Utworzenie populacji bierzącego pokolenia
+    Specimen** currentPopulation = new Specimen*[populationSize];
+    ///Utworzenie pustej populcjacji dla następnego pokolenia
     Specimen** nextGeneration = new Specimen*[populationSize];
-
-    //liczba przepisywanych do następnej populacji najlepszych rozwiązań
+    ///Liczba najlepszych osobników w danym pokoleniu, przepisywanych do populacji następnego pokolenia
     int elitSize = (int)(elitarismFactor*populationSize);
-
+    ///Wygenerowanie losowej populacji startowej i zsumowanie przystosowań
+    ///Zmienna na sumę wartości przystosowań dla całego pokolenia
+    ///Przystosowania mają wartości od 1 do rozmiaru populacji (1 = najgorsze przystosowanie)
+    int fitnessSum = 0;
+    ///Tablica na prawdopodobieństwa rozmnażania dla strategii selekcji accept-reject
+    int* matingProbabilities = new int[populationSize];
+    for (int i = 0; i < populationSize; ++i){
+        currentPopulation[i] = new Specimen(genesNum);
+        fitnessSum += i+1;
+    }
     for (int i = 0; i < populationSize; ++i)
-        initialPopulation[i] = new Specimen(genesNum);
-    generateRandomPopulation(initialPopulation, populationSize);
+        matingProbabilities[i] = (int)(1000*(double)(populationSize-i)/(double)fitnessSum);
 
+    generateRandomPopulation(currentPopulation, populationSize);
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///ALGORYTM
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///Pętla przechodząca po wszystkich pokoleniach
     for (int gen = 0; gen < generations; ++gen) {
 
-        ///Przystosowanie - obliczenie sumy przystosowań
-        int fitnessSum = 0;
-        //policzenie kosztów dróg dla każdego osobnika
         for (int i = 0; i < populationSize; ++i) {
 
-            fitnessSum += i+1;
-            //zapisanie kosztu drogi dla danego osobnika
-            double specimenRouteCost = getSpecimenRouteCost(initialPopulation[i], root);
-            initialPopulation[i]->setRouteCost(specimenRouteCost);
+            ///Obliczenie kosztu drogi reprezentowanej przez danego osobnika i zapisanie tej wartości
+            double specimenRouteCost = getSpecimenRouteCost(currentPopulation[i], root);
+            currentPopulation[i]->setRouteCost(specimenRouteCost);
 
-
-            //sortowanie
+            ///Sortowanie osobników od najlepszego do najgorszego według kosztów dróg.
             if (i > 0) {
                 int head = i;
-                while (head >= 1 && initialPopulation[head]->getCost() < initialPopulation[head - 1]->getCost()) {
-                    Specimen* buf = initialPopulation[head];
-                    initialPopulation[head] = initialPopulation[head - 1];
-                    initialPopulation[head - 1] = buf;
+                while (head >= 1 && currentPopulation[head]->getCost() < currentPopulation[head - 1]->getCost()) {
+                    ///Zamiana osobników miejscami, tak aby lepszy był na niższym indeksie
+                    Specimen* buf = currentPopulation[head];
+                    currentPopulation[head] = currentPopulation[head - 1];
+                    currentPopulation[head - 1] = buf;
                     head--;
                 }
+
             }
         }
-
-        ///Przystosowanie - ustalenie przystosowań
-        for(int i = 0; i<populationSize; i++) {
-            initialPopulation[i]->setFitness(populationSize-i);
-            double prob = 1000*(double)initialPopulation[i]->getFitness()/(double)fitnessSum;
-            initialPopulation[i]->setMatingProbablitiy((int)floor(prob));
-        }
+        ///////////////////////////////////////////////////////////////
+       /* std::cout<<"Przystosowania:"<<std::endl;
+        for(int i = 0; i<populationSize; i++)
+            std::cout << (populationSize-i) << " ";
+        std::cout<<std::endl;
+        std::cout<<"Prawdopodobieństwa:"<<std::endl;
+        for(int i = 0; i<populationSize; i++)
+            std::cout << matingProbabilities[i] << " ";
+        std::cout<<std::endl;*/
+        ///////////////////////////////////////////////////////////
 
         ///Porównanie z najlepszym dotychczas znalezionym rozwiązaniem
-        if(initialPopulation[0]->getCost() < routeCost(this->solution))
-            initialPopulation[0]->decodeChromosome(root,this->solution);
+        if(currentPopulation[0]->getCost() < routeCost(this->solution))
+            currentPopulation[0]->decodeChromosome(root,this->solution);
 
 
         ///robienie dzieci dla pozostałej cześci nowej populacji
         for(int i=elitSize, j=0; i<populationSize-1;){
             if(j<elitSize){
-                nextGeneration[j] = initialPopulation[j];
+                nextGeneration[j] = currentPopulation[j];
                 j++;
             }
             Specimen* parent1;
             Specimen* parent2;
-            switch(strategy){
+            switch(selectionStartegy){
                 case TOURNAMENT:{
-                    parent1 = tournament(initialPopulation,populationSize,2);
-                    parent2 = tournament(initialPopulation,populationSize,2);
-                    break;
-                }
-                case ACCEPTREJECT:{
-                    parent1 = acceptReject(initialPopulation,populationSize);
-                    parent2 = acceptReject(initialPopulation, populationSize);
+                    parent1 = tournament(currentPopulation,populationSize,2);
+                    parent2 = tournament(currentPopulation,populationSize,2);
                     break;
                 }
                 case ROULETTE:{
-                    parent1 = roulette(initialPopulation,populationSize,fitnessSum);
-                    parent2 = roulette(initialPopulation,populationSize,fitnessSum);
+                    parent1 = roulette(currentPopulation,populationSize,fitnessSum);
+                    parent2 = roulette(currentPopulation,populationSize,fitnessSum);
                     break;
                 }
             }
@@ -606,47 +617,33 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
             Specimen* child2;
             child1 = new Specimen(genesNum);
             child2 = new Specimen(genesNum);
-            twoPointCrossover(parent1, parent2, child1, child2, genesNum);
-            /////////////////////////////////////////
-           /* std::cout<<"parent 1: ";
-            for (int i = 0; i < genesNum; ++i)
-                std::cout<<parent1->getChromosome()[i]<< " ";
-            std::cout<<std::endl;
-            std::cout<<"parent 2: ";
-            for (int i = 0; i < genesNum; ++i)
-                std::cout<<parent2->getChromosome()[i]<< " ";
-            std::cout<<std::endl;
-            std::cout<<"child 1: ";
-            for (int i = 0; i < genesNum; ++i)
-                std::cout<<child1->getChromosome()[i]<< " ";
-            std::cout<<std::endl;
-            std::cout<<"child 2: ";
-            for (int i = 0; i < genesNum; ++i)
-                std::cout<<child2->getChromosome()[i]<< " ";
-            std::cout<<std::endl;*/
-            ////////////////////////////////////////
 
-           mutate(child1,genesNum,100, 3);
-           mutate(child2,genesNum,100, 3);
+            switch(crossoverStrategy){
+                case ONEPOINT:{
+                    onePointCrossover(parent1,parent2,child1,child2,genesNum);
+                    break;
+                }
+                case TWOPOINT:{
+                    twoPointCrossover(parent1,parent2,child1,child2,genesNum);
+                    break;
+                }
+                case RANDOM:{
+                    randomCrossover(parent1,parent2,child1,child2,genesNum);
+                    break;
+                }
+            }
+
+           mutate(child1,genesNum,100, (int)(0.1*populationSize));
+           mutate(child2,genesNum,100, (int)(0.1*populationSize));
 
             nextGeneration[i] = child1;
             if(i+1 < populationSize)
                 nextGeneration[i+1] = child2;
             i=i+2;
         }
-
-        memcpy(initialPopulation, nextGeneration, populationSize*sizeof(Specimen*));
-        /*std::cout << "NEXT GENERATION" << std::endl;
-        for (int k = 0; k < populationSize; k++){
-            int* chromosome = new int[genesNum];
-            nextGeneration[k]->decodeChromosome(root, chromosome);
-            for(int m = 0; m < genesNum; m++)
-                std::cout<<chromosome[m]<< " ";
-            std::cout<<std::endl;
-            delete[] chromosome;
-        }
-        std::cout << "NEXT GENERATION" << std::endl;
-        */
+        ///Ustawienie nowego pokolenia jako bierzącego pokolenia
+        memcpy(currentPopulation, nextGeneration, populationSize*sizeof(Specimen*));
+        std::cout<<"Generation number " << gen << " done" << std::endl;
     }
 }
 
@@ -701,20 +698,11 @@ void TownsTSP::onePointCrossover(Specimen *parent1, Specimen *parent2, Specimen 
     child2->setChromosome(chromosome);
 }
 
-Specimen *TownsTSP::acceptReject(Specimen **population, int populationSize) {
-    while(true) {
-        int index = rand() % populationSize;
-        int throwDice = rand() % 1000;
-        if (throwDice <= population[index]->getMatingProbablitiy())
-            return population[index];
-    }
-}
-
 Specimen *TownsTSP::roulette(Specimen **population,int populationSize, int fitnessSum) {
     int throwDice = rand()%fitnessSum; // losujemy liczbę od 0 - sumy przystosowań
     int sum = 0;
     for (int i = 0; i < populationSize; ++i) {
-        sum += population[i]->getFitness();
+        sum += (populationSize-i);
         if(sum > throwDice)
             return population[i];
     }
@@ -740,13 +728,28 @@ void TownsTSP::twoPointCrossover(Specimen *parent1, Specimen *parent2, Specimen 
 }
 
 void TownsTSP::mutate(Specimen *specimen,int genesNum, int mutationProbability, int mutationsNum) {
-    for (int i = 0; i < mutationsNum; ++i) {
-        int throwDice = rand()%1000;
-        if(throwDice < mutationProbability){
-            int geneToMute = rand()%genesNum;
-            int newGene = rand()%(genesNum-geneToMute);
+    int throwDice = rand()%1000;
+    if(throwDice < mutationProbability) {
+        for (int i = 0; i < mutationsNum; ++i) {
+
+            int geneToMute = rand() % genesNum;
+            int newGene = rand() % (genesNum - geneToMute);
             specimen->getChromosome()[geneToMute] = newGene;
+
         }
+    }
+}
+
+void TownsTSP::randomCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum) {
+    for (int i = 0; i < genesNum; ++i) {
+        if(rand()%2) {
+            child1->getChromosome()[i] = parent1->getChromosome()[i];
+            child2->getChromosome()[i] = parent2->getChromosome()[i];
+        }else{
+            child1->getChromosome()[i] = parent2->getChromosome()[i];
+            child2->getChromosome()[i] = parent1->getChromosome()[i];
+        }
+
     }
 }
 

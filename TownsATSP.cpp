@@ -509,3 +509,238 @@ void TownsATSP::randomNeighbourhoodTabu(int tt, int it, int nSize) {
         tabu.decrementTenure();
     }
 }
+
+
+void TownsATSP::genetic(int generations, int populationSize, double elitarismFactor, SelectionStrategy strategy, CrossoverStrategy crossoverStrategy) {
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///INICJALIZACJA
+    ////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///Liczba genów w chromosomie
+    int genesNum = this->map_dim;
+    ///Bazowe rozwiązanie - potrzebne do dekodowania chromosomów
+    int* root = new int[genesNum];
+    memcpy(root, this->solution, genesNum*sizeof(int));
+    ///Utworzenie populacji bierzącego pokolenia
+    Specimen** currentPopulation = new Specimen*[populationSize];
+    ///Utworzenie pustej populcjacji dla następnego pokolenia
+    Specimen** nextGeneration = new Specimen*[populationSize];
+    ///Liczba najlepszych osobników w danym pokoleniu, przepisywanych do populacji następnego pokolenia
+    int elitSize = (int)(elitarismFactor*populationSize);
+    ///Wygenerowanie losowej populacji startowej i zsumowanie przystosowań
+    ///Zmienna na sumę wartości przystosowań dla całego pokolenia
+    ///Przystosowania mają wartości od 1 do rozmiaru populacji (1 = najgorsze przystosowanie)
+    int fitnessSum = 0;
+    ///Tablica na prawdopodobieństwa rozmnażania dla strategii selekcji accept-reject
+    int* matingProbabilities = new int[populationSize];
+    for (int i = 0; i < populationSize; ++i){
+        currentPopulation[i] = new Specimen(genesNum);
+        fitnessSum += i+1;
+    }
+    for (int i = 0; i < populationSize; ++i)
+        matingProbabilities[i] = (int)(1000*(double)(populationSize-i)/(double)fitnessSum);
+
+    generateRandomPopulation(currentPopulation, populationSize);
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///ALGORYTM
+    ///////////////////////////////////////////////////////////////////////////////////////////////////////
+    ///Pętla przechodząca po wszystkich pokoleniach
+    for (int gen = 0; gen < generations; ++gen) {
+
+        for (int i = 0; i < populationSize; ++i) {
+
+            ///Obliczenie kosztu drogi reprezentowanej przez danego osobnika i zapisanie tej wartości
+            double specimenRouteCost = getSpecimenRouteCost(currentPopulation[i], root);
+            currentPopulation[i]->setRouteCost(specimenRouteCost);
+
+            ///Sortowanie osobników od najlepszego do najgorszego według kosztów dróg.
+            if (i > 0) {
+                int head = i;
+                while (head >= 1 && currentPopulation[head]->getCost() < currentPopulation[head - 1]->getCost()) {
+                    ///Zamiana osobników miejscami, tak aby lepszy był na niższym indeksie
+                    Specimen* buf = currentPopulation[head];
+                    currentPopulation[head] = currentPopulation[head - 1];
+                    currentPopulation[head - 1] = buf;
+                    head--;
+                }
+
+            }
+        }
+        ///////////////////////////////////////////////////////////////
+        /* std::cout<<"Przystosowania:"<<std::endl;
+         for(int i = 0; i<populationSize; i++)
+             std::cout << (populationSize-i) << " ";
+         std::cout<<std::endl;
+         std::cout<<"Prawdopodobieństwa:"<<std::endl;
+         for(int i = 0; i<populationSize; i++)
+             std::cout << matingProbabilities[i] << " ";
+         std::cout<<std::endl;*/
+        ///////////////////////////////////////////////////////////
+
+        ///Porównanie z najlepszym dotychczas znalezionym rozwiązaniem
+        if(currentPopulation[0]->getCost() < routeCost(this->solution))
+            currentPopulation[0]->decodeChromosome(root,this->solution);
+
+
+        ///robienie dzieci dla pozostałej cześci nowej populacji
+        for(int i=elitSize, j=0; i<populationSize-1;){
+            if(j<elitSize){
+                nextGeneration[j] = currentPopulation[j];
+                j++;
+            }
+            Specimen* parent1;
+            Specimen* parent2;
+            switch(strategy){
+                case TOURNAMENT:{
+                    parent1 = tournament(currentPopulation,populationSize,2);
+                    parent2 = tournament(currentPopulation,populationSize,2);
+                    break;
+                }
+                case ROULETTE:{
+                    parent1 = roulette(currentPopulation,populationSize,fitnessSum);
+                    parent2 = roulette(currentPopulation,populationSize,fitnessSum);
+                    break;
+                }
+            }
+
+            Specimen* child1;
+            Specimen* child2;
+            child1 = new Specimen(genesNum);
+            child2 = new Specimen(genesNum);
+
+            switch(crossoverStrategy){
+                case ONEPOINT:{
+                    onePointCrossover(parent1,parent2,child1,child2,genesNum);
+                    break;
+                }
+                case TWOPOINT:{
+                    twoPointCrossover(parent1,parent2,child1,child2,genesNum);
+                    break;
+                }
+                case RANDOM:{
+                    randomCrossover(parent1,parent2,child1,child2,genesNum);
+                    break;
+                }
+            }
+
+            mutate(child1,genesNum,100, (int)(0.1*populationSize));
+            mutate(child2,genesNum,100, (int)(0.1*populationSize));
+
+            nextGeneration[i] = child1;
+            if(i+1 < populationSize)
+                nextGeneration[i+1] = child2;
+            i=i+2;
+        }
+        ///Ustawienie nowego pokolenia jako bierzącego pokolenia
+        memcpy(currentPopulation, nextGeneration, populationSize*sizeof(Specimen*));
+        std::cout<<"Generation number " << gen << " done" << std::endl;
+    }
+}
+
+void TownsATSP::generateRandomPopulation(Specimen **population, int populationSize) {
+    for (int i = 0; i < populationSize; i++) {
+
+        int genesNum = population[i]->getGenesNum();
+        int chromosome[genesNum];
+
+        for (int j = 0; j < genesNum; j++) {
+            int topBorder = genesNum-j;
+            int gene = rand()%topBorder;
+            chromosome[j] = gene;
+        }
+        population[i]->setChromosome(chromosome);
+    }
+}
+
+double TownsATSP::getSpecimenRouteCost(Specimen *specimen, int *root) {
+    int* route = new int [specimen->getGenesNum()];
+    specimen->decodeChromosome(root, route);
+    double cost = routeCost(route);
+    delete[] route;
+    return cost;
+}
+
+Specimen *TownsATSP::tournament(Specimen **population, int populationSize, int tournamentMembers) {
+    Specimen* best = nullptr;
+    int lowest = populationSize;
+    for (int i = 0; i < tournamentMembers; ++i) {
+        int index = rand()%populationSize;
+        if(index < lowest)
+            lowest = index;
+    }
+
+    best = population[lowest];
+    return best;
+}
+
+void TownsATSP::onePointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum) {
+    int crossoverPoint = 1 + rand()%(genesNum-1);
+
+    int* chromosome = new int[genesNum];
+    //pierwsze dziecko
+    memcpy(chromosome, parent1->getChromosome(), crossoverPoint*sizeof(int));
+    memcpy(chromosome+crossoverPoint, parent2->getChromosome()+crossoverPoint, (genesNum-crossoverPoint)*sizeof(int));
+    child1->setChromosome(chromosome);
+
+    //drugie dziecko
+    memcpy(chromosome, parent2->getChromosome(), crossoverPoint*sizeof(int));
+    memcpy(chromosome+crossoverPoint, parent1->getChromosome()+crossoverPoint, (genesNum-crossoverPoint)*sizeof(int));
+    child2->setChromosome(chromosome);
+}
+
+Specimen *TownsATSP::roulette(Specimen **population,int populationSize, int fitnessSum) {
+    int throwDice = rand()%fitnessSum; // losujemy liczbę od 0 - sumy przystosowań
+    int sum = 0;
+    for (int i = 0; i < populationSize; ++i) {
+        sum += (populationSize-i);
+        if(sum > throwDice)
+            return population[i];
+    }
+}
+
+void TownsATSP::twoPointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum) {
+    int firstCrossoverPoint = 1 + rand()%(genesNum-2);
+    int secondCrossoverPoint = 1+ rand()%(genesNum-firstCrossoverPoint-1);
+
+
+    int* chromosome = new int[genesNum];
+    //pierwsze dziecko
+    memcpy(chromosome, parent1->getChromosome(), firstCrossoverPoint*sizeof(int));
+    memcpy(chromosome+firstCrossoverPoint, parent2->getChromosome()+firstCrossoverPoint, secondCrossoverPoint*sizeof(int));
+    memcpy(chromosome+firstCrossoverPoint+secondCrossoverPoint, parent1->getChromosome()+firstCrossoverPoint+secondCrossoverPoint, (genesNum-firstCrossoverPoint-secondCrossoverPoint)*sizeof(int));
+    child1->setChromosome(chromosome);
+
+    //drugie dziecko
+    memcpy(chromosome, parent2->getChromosome(), firstCrossoverPoint*sizeof(int));
+    memcpy(chromosome+firstCrossoverPoint, parent1->getChromosome()+firstCrossoverPoint, secondCrossoverPoint*sizeof(int));
+    memcpy(chromosome+firstCrossoverPoint+secondCrossoverPoint, parent2->getChromosome()+firstCrossoverPoint+secondCrossoverPoint, (genesNum-firstCrossoverPoint-secondCrossoverPoint)*sizeof(int));
+    child2->setChromosome(chromosome);
+}
+
+void TownsATSP::mutate(Specimen *specimen,int genesNum, int mutationProbability, int mutationsNum) {
+    int throwDice = rand()%1000;
+    if(throwDice < mutationProbability) {
+        for (int i = 0; i < mutationsNum; ++i) {
+
+            int geneToMute = rand() % genesNum;
+            int newGene = rand() % (genesNum - geneToMute);
+            specimen->getChromosome()[geneToMute] = newGene;
+
+        }
+    }
+}
+
+void TownsATSP::randomCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum){
+    for (int i = 0; i < genesNum; ++i) {
+        if(rand()%2) {
+            child1->getChromosome()[i] = parent1->getChromosome()[i];
+            child2->getChromosome()[i] = parent2->getChromosome()[i];
+        }else{
+            child1->getChromosome()[i] = parent2->getChromosome()[i];
+            child2->getChromosome()[i] = parent1->getChromosome()[i];
+        }
+
+    }
+}
