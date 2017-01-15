@@ -519,15 +519,13 @@ void TownsTSP::randomNeighbourhoodTabu(int tt, int it, int nSize) {
     }
 }
 
-void TownsTSP::genetic(int generations, double elitarismFactor) {
+void TownsTSP::genetic(int generations, int populationSize, double elitarismFactor, SelectionStrategy strategy) {
 
     int genesNum = this->map_dim;
 
     //zapisanie bazowego rozwiązania, potrzebnego do dekodowania chromosomów
     int* root = new int[genesNum];
     memcpy(root, this->solution, genesNum*sizeof(int));
-
-    int populationSize = 10;
 
     //utworzenie populacji początkowej
     Specimen** initialPopulation = new Specimen*[populationSize];
@@ -543,13 +541,16 @@ void TownsTSP::genetic(int generations, double elitarismFactor) {
 
     for (int gen = 0; gen < generations; ++gen) {
 
+        ///Przystosowanie - obliczenie sumy przystosowań
+        int fitnessSum = 0;
         //policzenie kosztów dróg dla każdego osobnika
         for (int i = 0; i < populationSize; ++i) {
 
-
+            fitnessSum += i+1;
             //zapisanie kosztu drogi dla danego osobnika
             double specimenRouteCost = getSpecimenRouteCost(initialPopulation[i], root);
             initialPopulation[i]->setRouteCost(specimenRouteCost);
+
 
             //sortowanie
             if (i > 0) {
@@ -561,28 +562,69 @@ void TownsTSP::genetic(int generations, double elitarismFactor) {
                     head--;
                 }
             }
-
         }
 
+        ///Przystosowanie - ustalenie przystosowań
+        for(int i = 0; i<populationSize; i++) {
+            initialPopulation[i]->setFitness(populationSize-i);
+            double prob = 100*(double)initialPopulation[i]->getFitness()/(double)fitnessSum;
+            initialPopulation[i]->setMatingProbablitiy((int)floor(prob));
+        }
+
+        ///Porównanie z najlepszym dotychczas znalezionym rozwiązaniem
         if(initialPopulation[0]->getCost() < routeCost(this->solution))
             initialPopulation[0]->decodeChromosome(root,this->solution);
 
 
-        //robienie dzieci dla pozostałej cześci nowej populacji
+        ///robienie dzieci dla pozostałej cześci nowej populacji
         for(int i=elitSize, j=0; i<populationSize-1;){
             if(j<elitSize){
                 nextGeneration[j] = initialPopulation[j];
                 j++;
             }
-            Specimen* parent1 = tournament(initialPopulation,populationSize,2);
-            Specimen* parent2 = tournament(initialPopulation,populationSize,2);
+            Specimen* parent1;
+            Specimen* parent2;
+            switch(strategy){
+                case TOURNAMENT:{
+                    parent1 = tournament(initialPopulation,populationSize,2);
+                    parent2 = tournament(initialPopulation,populationSize,2);
+                    break;
+                }
+                case ACCEPTREJECT:{
+                    parent1 = acceptReject(initialPopulation,populationSize);
+                    parent2 = acceptReject(initialPopulation, populationSize);
+                    break;
+                }
+                case ROULETTE:{
+                    parent1 = roulette(initialPopulation,populationSize,fitnessSum);
+                    parent2 = roulette(initialPopulation,populationSize,fitnessSum);
+                    break;
+                }
+            }
 
             Specimen* child1;
             Specimen* child2;
             child1 = new Specimen(genesNum);
             child2 = new Specimen(genesNum);
-            crossover(parent1,parent2, child1, child2,genesNum);
-
+            twoPointCrossover(parent1, parent2, child1, child2, genesNum);
+            /////////////////////////////////////////
+           /* std::cout<<"parent 1: ";
+            for (int i = 0; i < genesNum; ++i)
+                std::cout<<parent1->getChromosome()[i]<< " ";
+            std::cout<<std::endl;
+            std::cout<<"parent 2: ";
+            for (int i = 0; i < genesNum; ++i)
+                std::cout<<parent2->getChromosome()[i]<< " ";
+            std::cout<<std::endl;
+            std::cout<<"child 1: ";
+            for (int i = 0; i < genesNum; ++i)
+                std::cout<<child1->getChromosome()[i]<< " ";
+            std::cout<<std::endl;
+            std::cout<<"child 2: ";
+            for (int i = 0; i < genesNum; ++i)
+                std::cout<<child2->getChromosome()[i]<< " ";
+            std::cout<<std::endl;*/
+            ////////////////////////////////////////
             nextGeneration[i] = child1;
             if(i+1 < populationSize)
                 nextGeneration[i+1] = child2;
@@ -590,7 +632,6 @@ void TownsTSP::genetic(int generations, double elitarismFactor) {
         }
 
         memcpy(initialPopulation, nextGeneration, populationSize*sizeof(Specimen*));
-
         /*std::cout << "NEXT GENERATION" << std::endl;
         for (int k = 0; k < populationSize; k++){
             int* chromosome = new int[genesNum];
@@ -641,7 +682,7 @@ Specimen *TownsTSP::tournament(Specimen **population, int populationSize, int to
     return best;
 }
 
-void TownsTSP::crossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum) {
+void TownsTSP::onePointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum) {
     int crossoverPoint = 1 + rand()%(genesNum-1);
 
     int* chromosome = new int[genesNum];
@@ -653,6 +694,44 @@ void TownsTSP::crossover(Specimen *parent1, Specimen *parent2, Specimen *child1,
     //drugie dziecko
     memcpy(chromosome, parent2->getChromosome(), crossoverPoint*sizeof(int));
     memcpy(chromosome+crossoverPoint, parent1->getChromosome()+crossoverPoint, (genesNum-crossoverPoint)*sizeof(int));
+    child2->setChromosome(chromosome);
+}
+
+Specimen *TownsTSP::acceptReject(Specimen **population, int populationSize) {
+    while(true) {
+        int index = rand() % populationSize;
+        int throwDice = rand() % 100;
+        if (throwDice <= population[index]->getMatingProbablitiy())
+            return population[index];
+    }
+}
+
+Specimen *TownsTSP::roulette(Specimen **population,int populationSize, int fitnessSum) {
+    int throwDice = rand()%fitnessSum; // losujemy liczbę od 0 - sumy przystosowań
+    int sum = 0;
+    for (int i = 0; i < populationSize; ++i) {
+        sum += population[i]->getFitness();
+        if(sum > throwDice)
+            return population[i];
+    }
+}
+
+void TownsTSP::twoPointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum) {
+    int firstCrossoverPoint = 1 + rand()%(genesNum-2);
+    int secondCrossoverPoint = 1+ rand()%(genesNum-firstCrossoverPoint-1);
+
+
+    int* chromosome = new int[genesNum];
+    //pierwsze dziecko
+    memcpy(chromosome, parent1->getChromosome(), firstCrossoverPoint*sizeof(int));
+    memcpy(chromosome+firstCrossoverPoint, parent2->getChromosome()+firstCrossoverPoint, secondCrossoverPoint*sizeof(int));
+    memcpy(chromosome+firstCrossoverPoint+secondCrossoverPoint, parent1->getChromosome()+firstCrossoverPoint+secondCrossoverPoint, (genesNum-firstCrossoverPoint-secondCrossoverPoint)*sizeof(int));
+    child1->setChromosome(chromosome);
+
+    //drugie dziecko
+    memcpy(chromosome, parent2->getChromosome(), firstCrossoverPoint*sizeof(int));
+    memcpy(chromosome+firstCrossoverPoint, parent1->getChromosome()+firstCrossoverPoint, secondCrossoverPoint*sizeof(int));
+    memcpy(chromosome+firstCrossoverPoint+secondCrossoverPoint, parent2->getChromosome()+firstCrossoverPoint+secondCrossoverPoint, (genesNum-firstCrossoverPoint-secondCrossoverPoint)*sizeof(int));
     child2->setChromosome(chromosome);
 }
 

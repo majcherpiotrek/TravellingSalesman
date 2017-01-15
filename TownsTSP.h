@@ -42,6 +42,9 @@ private:
     void permuteRoute(int* route, TabuMatrix& tabu);
     void swapTowns(int* route, int a, int b);
 public:
+    enum SelectionStrategy{
+        TOURNAMENT, ACCEPTREJECT, ROULETTE
+    };
     int* solution;
 
     TownsTSP();
@@ -56,11 +59,15 @@ public:
     void performSA();
     void deterministicTabu(int tt, int it);
     void randomNeighbourhoodTabu(int tt, int it, int nSize);
-    void genetic(int generations, double elitarismFactor);
+    void genetic(int generations,int populationSize, double elitarismFactor, SelectionStrategy startegy);
     void generateRandomPopulation(Specimen** population, int populationSize);
     double getSpecimenRouteCost(Specimen *specimen, int *root);
     Specimen* tournament(Specimen** population,int populationSize, int tournamentMembers);
-    void crossover(Specimen* parent1, Specimen* parent2, Specimen* child1, Specimen* child2, int genesNum);
+    Specimen* acceptReject(Specimen** population, int populationSize);
+    Specimen* roulette(Specimen** population, int populationSize, int fitnessSum);
+    void onePointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum);
+    void twoPointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum);
+
 
 };
 

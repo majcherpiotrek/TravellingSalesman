@@ -11,7 +11,18 @@ private:
     int* chromosome;
     int genesNum;
     double routeCost;
+    int matingProbablitiy;
+    int fitness;
 public:
+    int getFitness() const;
+
+    void setFitness(int fitness);
+
+public:
+    int getMatingProbablitiy() const;
+
+    void setMatingProbablitiy(int matingProbablitiy);
+
     Specimen(int genesNum);
     ~Specimen(){if(chromosome != nullptr)delete[] chromosome;}
 

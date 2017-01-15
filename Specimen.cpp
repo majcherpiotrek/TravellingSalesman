@@ -47,4 +47,20 @@ void Specimen::getChromosome(int * chromosome) {
     memcpy(chromosome, this->chromosome, this->genesNum*sizeof(int));
 }
 
+int Specimen::getMatingProbablitiy() const {
+    return matingProbablitiy;
+}
+
+void Specimen::setMatingProbablitiy(int matingProbablitiy) {
+    Specimen::matingProbablitiy = matingProbablitiy;
+}
+
+int Specimen::getFitness() const {
+    return fitness;
+}
+
+void Specimen::setFitness(int fitness) {
+    Specimen::fitness = fitness;
+}
+
 
