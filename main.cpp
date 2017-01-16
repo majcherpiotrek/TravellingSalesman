@@ -16,6 +16,8 @@ int ain()
     main_menu.add("(4) Tabu search deterministyczny - TSP\n");
     main_menu.add("(5) Tabu search losowe sasiedztwo- ATSP\n");
     main_menu.add("(6) Tabu search losowe sasiedztwo - TSP\n");
+    main_menu.add("(7) Algorytm genetyczny - TSP\n");
+    main_menu.add("(8) Algorytm genetyczny - ATSP\n");
 
     main_menu.add("\n(k) Zakoncz program ... ");
 
@@ -231,6 +233,80 @@ int ain()
 
                     t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
                     wynik = tsp.routeCost(tsp.solution);
+
+                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
+                    std::cout << "Koszt rozwiazania optymalnego: " << optCost << std::endl;
+                    std::cout << "Błąd: " << 100*((wynik-optCost)/optCost) << "%" << std::endl;
+                    std::cout << "Czas wykonania: " << t << " ms" << std::endl;
+                }
+
+                break;
+            }
+            case '7':
+            {
+                std::cout << "\nInstancje problemu TSP:\nberlin52.tsp\nch130.tsp\na280.tsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
+                std::string nazwa;
+                std::cin >> nazwa;
+
+                TownsTSP tsp = *(new TownsTSP());
+                if(tsp.loadMap(nazwa))
+                {
+                    double optCost = tsp.getOptCost();
+                    clock_t START, STOP;
+                    double t;
+                    std::cout << std::endl << std::endl;
+                    std::cout << "Elitaryzm 10%: " << (int)(0.1*tsp.getSize()) << " osobnikow w kazdej populacji" std::endl;
+                    std::cout << "Liczba pokolen: 200" <<std::endl;
+                    std::cout << "Rozmiar populacji: 2000" << std::endl;
+                    std::cout << "Prawdopodobienstwo mutacji: 0.1%" << std::endl;
+                    std::cout << "Maksymalny zakres mutacji: 10% chromosomu" <<std::endl;
+                    std::cout << "Strategia selekcji: ruletka" <<std::endl;
+                    std::cout << "Sposob krzyzowania: uniform crossover" <<std::endl;
+
+                    double wynik;
+                    START =clock();
+                    tsp.genetic(200,2000,0.1,SelectionStrategy::ROULETTE, CrossoverStrategy::RANDOM);
+                    STOP = clock();
+
+                    t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
+                    wynik = tsp.routeCost(tsp.solution);
+
+                    std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
+                    std::cout << "Koszt rozwiazania optymalnego: " << optCost << std::endl;
+                    std::cout << "Błąd: " << 100*((wynik-optCost)/optCost) << "%" << std::endl;
+                    std::cout << "Czas wykonania: " << t << " ms" << std::endl;
+                }
+
+                break;
+            }
+            case '8':
+            {
+                std::cout << "\nInstancje problemu ATSP:\nftv35.atsp\nft70.atsp\nftv170.atsp\nWybierz jeden z plikow i podaj jego nazwe razem z rozszerzeniem: ";
+                std::string nazwa;
+                std::cin >> nazwa;
+
+                TownsATSP atsp = *(new TownsATSP());
+                if(atsp.loadMap(nazwa))
+                {
+                    double optCost = atsp.getOptCost();
+                    clock_t START, STOP;
+                    double t;
+                    std::cout << std::endl << std::endl;
+                    std::cout << "Elitaryzm 10%: " << (int)(0.1*atsp.getSize()) << " osobnikow w kazdej populacji" std::endl;
+                    std::cout << "Liczba pokolen: 200" <<std::endl;
+                    std::cout << "Rozmiar populacji: 2000" << std::endl;
+                    std::cout << "Prawdopodobienstwo mutacji: 0.1%" << std::endl;
+                    std::cout << "Maksymalny zakres mutacji: 10% chromosomu" <<std::endl;
+                    std::cout << "Strategia selekcji: ruletka" <<std::endl;
+                    std::cout << "Sposob krzyzowania: uniform crossover" <<std::endl;
+
+                    double wynik;
+                    START =clock();
+                    atsp.genetic(200,2000,0.1,SelectionStrategy::ROULETTE, CrossoverStrategy::RANDOM);
+                    STOP = clock();
+
+                    t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
+                    wynik = atsp.routeCost(atsp.solution);
 
                     std::cout << "Koszt znalezionego rozwiazania: " << wynik << std::endl;
                     std::cout << "Koszt rozwiazania optymalnego: " << optCost << std::endl;

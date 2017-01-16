@@ -540,13 +540,13 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
     ///Przystosowania mają wartości od 1 do rozmiaru populacji (1 = najgorsze przystosowanie)
     int fitnessSum = 0;
     ///Tablica na prawdopodobieństwa rozmnażania dla strategii selekcji accept-reject
-    int* matingProbabilities = new int[populationSize];
+   // int* matingProbabilities = new int[populationSize];
     for (int i = 0; i < populationSize; ++i){
         currentPopulation[i] = new Specimen(genesNum);
         fitnessSum += i+1;
     }
-    for (int i = 0; i < populationSize; ++i)
-        matingProbabilities[i] = (int)(1000*(double)(populationSize-i)/(double)fitnessSum);
+    //for (int i = 0; i < populationSize; ++i)
+       // matingProbabilities[i] = (int)(1000*(double)(populationSize-i)/(double)fitnessSum);
 
     generateRandomPopulation(currentPopulation, populationSize);
     ///////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -633,8 +633,8 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
                 }
             }
 
-           mutate(child1,genesNum,100, (int)(0.1*populationSize));
-           mutate(child2,genesNum,100, (int)(0.1*populationSize));
+           mutate(child1,genesNum,1, (int)(0.2*populationSize));
+           mutate(child2,genesNum,1, (int)(0.2*populationSize));
 
             nextGeneration[i] = child1;
             if(i+1 < populationSize)
@@ -642,9 +642,14 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
             i=i+2;
         }
         ///Ustawienie nowego pokolenia jako bierzącego pokolenia
+        for (int k = elitSize; k < populationSize; ++k) {
+            delete currentPopulation[k];
+        }
         memcpy(currentPopulation, nextGeneration, populationSize*sizeof(Specimen*));
-        std::cout<<"Generation number " << gen << " done" << std::endl;
+       // std::cout<<"Generation number " << gen << " done" << std::endl;
     }
+    delete[] root;
+    //delete[] matingProbabilities;
 }
 
 void TownsTSP::generateRandomPopulation(Specimen **population, int populationSize) {
@@ -728,16 +733,17 @@ void TownsTSP::twoPointCrossover(Specimen *parent1, Specimen *parent2, Specimen 
 }
 
 void TownsTSP::mutate(Specimen *specimen,int genesNum, int mutationProbability, int mutationsNum) {
-    int throwDice = rand()%1000;
-    if(throwDice < mutationProbability) {
-        for (int i = 0; i < mutationsNum; ++i) {
 
-            int geneToMute = rand() % genesNum;
-            int newGene = rand() % (genesNum - geneToMute);
-            specimen->getChromosome()[geneToMute] = newGene;
+        for (int i = 0; i < mutationsNum; ++i) {
+            int throwDice = rand()%1000;
+            if(throwDice < mutationProbability) {
+                int geneToMute = rand() % genesNum;
+                int newGene = rand() % (genesNum - geneToMute);
+                specimen->getChromosome()[geneToMute] = newGene;
+            }
 
         }
-    }
+
 }
 
 void TownsTSP::randomCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum) {

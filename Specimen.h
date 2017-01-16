@@ -13,7 +13,7 @@ private:
     double routeCost;
 public:
     Specimen(int genesNum);
-    ~Specimen(){if(chromosome != nullptr)delete[] chromosome;}
+    ~Specimen(){delete[] chromosome;}
 
     void decodeChromosome(int* root, int* routeFromChromosome);
     void setChromosome(int* chromosome);
