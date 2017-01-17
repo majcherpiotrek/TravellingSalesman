@@ -633,8 +633,8 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
                 }
             }
 
-           mutate(child1,genesNum,1, (int)(0.2*populationSize));
-           mutate(child2,genesNum,1, (int)(0.2*populationSize));
+           mutate(child1,genesNum,1, (int)(0.1*populationSize));
+           mutate(child2,genesNum,1, (int)(0.1*populationSize));
 
             nextGeneration[i] = child1;
             if(i+1 < populationSize)

@@ -255,8 +255,8 @@ int ain()
                     clock_t START, STOP;
                     double t;
                     std::cout << std::endl << std::endl;
-                    std::cout << "Elitaryzm 10%: " << (int)(0.1*tsp.getSize()) << " osobnikow w kazdej populacji" std::endl;
-                    std::cout << "Liczba pokolen: 200" <<std::endl;
+                    std::cout << "Elitaryzm 10%: " << (int)(0.1*tsp.getSize()) << " osobnikow w kazdej populacji"<< std::endl;
+                    std::cout << "Liczba pokolen: 300" <<std::endl;
                     std::cout << "Rozmiar populacji: 2000" << std::endl;
                     std::cout << "Prawdopodobienstwo mutacji: 0.1%" << std::endl;
                     std::cout << "Maksymalny zakres mutacji: 10% chromosomu" <<std::endl;
@@ -292,8 +292,8 @@ int ain()
                     clock_t START, STOP;
                     double t;
                     std::cout << std::endl << std::endl;
-                    std::cout << "Elitaryzm 10%: " << (int)(0.1*atsp.getSize()) << " osobnikow w kazdej populacji" std::endl;
-                    std::cout << "Liczba pokolen: 200" <<std::endl;
+                    std::cout << "Elitaryzm 10%: " << (int)(0.1*atsp.getSize()) << " osobnikow w kazdej populacji"<< std::endl;
+                    std::cout << "Liczba pokolen: 300" <<std::endl;
                     std::cout << "Rozmiar populacji: 2000" << std::endl;
                     std::cout << "Prawdopodobienstwo mutacji: 0.1%" << std::endl;
                     std::cout << "Maksymalny zakres mutacji: 10% chromosomu" <<std::endl;
