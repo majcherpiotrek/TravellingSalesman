@@ -228,6 +228,7 @@ int TownsATSP::routeCost(int *route) {
     for( int i = 0; i+1 < map_dim; i++)
         cost += towns_map[ route[i] ][ route[i+1] ];
 
+    cost += towns_map [ route[map_dim-1] ][ route[0] ];
     return cost;
 }
 void TownsATSP::resetSolution() {

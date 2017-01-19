@@ -265,7 +265,7 @@ int main()
 
                     double wynik;
                     START =clock();
-                    tsp.genetic(200,2000,0.1,SelectionStrategy::ROULETTE, CrossoverStrategy::RANDOM);
+                    tsp.genetic(300,10000,0.1,1000,SelectionStrategy::ROULETTE,CrossoverStrategy::RANDOM);
                     STOP = clock();
 
                     t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
@@ -302,7 +302,7 @@ int main()
 
                     double wynik;
                     START =clock();
-                    atsp.genetic(200,2000,0.1,SelectionStrategy::ROULETTE, CrossoverStrategy::RANDOM);
+                    atsp.genetic(300,2000,0.1,SelectionStrategy::ROULETTE, CrossoverStrategy::RANDOM);
                     STOP = clock();
 
                     t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
