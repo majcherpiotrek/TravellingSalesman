@@ -231,7 +231,7 @@ double TownsTSP::routeCost(int *route) {
     int cost = 0;
 
     for( int i = 0; i+1 < map_dim; i++)
-        cost += towns_map[ route[i] ][ route[i+1] ];
+        cost += towns_map[route[i]][route[i + 1]];
 
     cost += towns_map[ route[0] ][ route[map_dim-1] ];
     return cost;
@@ -622,8 +622,6 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
                     }
                 }
 
-                mutate(offspringAB, root,genesNum,10);
-                mutate(offspringBA,root,genesNum,10);
 
                 ///Dodanie stworzonych potomków do populacji potomków
                 offspringPopulation[offspringBorn] = offspringAB;
@@ -850,6 +848,287 @@ void TownsTSP::rankAndSortPopulation(Specimen** population, int populationSize, 
             }
 
         }
+    }
+}
+
+void TownsTSP::newGenetic(int generations, int popSize, int matingPopSize, int mutationProb) {
+
+    int genesNum = this->map_dim;
+    int crossoverProb = 95;
+    ///Tablica przechowująca pokolenie
+    int* population[popSize];
+    ///Tablica przechowująca koszty dróg reprezentowanych przez poszczególnych osobników
+    double routeCostsTable[popSize];
+    ///Wygenerowanie populacji początkowej
+    for (int i = 0; i < popSize ; ++i) {
+        population[i] = new int[genesNum];
+        for (int j = 0; j < genesNum; ++j)
+            population[i][j] = j;
+        for(int k = 0; k < 10; k++)
+            invertMutate(population[i],genesNum);
+        routeCostsTable[i] = routeCost(population[i]);
+    }
+
+    int* matingPopulation[matingPopSize];
+    int matingCouples = popSize;
+    int fitnessSum;
+//    std::cout<<"[ ";
+//    for (int i = 0; i < popSize; ++i) {
+//        for(int k = 0; k < genesNum; k++)
+//            std::cout<<population[i][k] << " ";
+//        std::cout<<"]"<<std::endl;
+//    }
+    for (int gen = 0; gen < generations; ++gen) {
+
+        fitnessSum = 0;
+        ///Ocena i posortowanie populacji
+        rankAndSort(population,routeCostsTable,popSize,fitnessSum);
+
+        ///Porównanie z najlepszym dotychczas znalezionym rozwiązaniem
+        if(routeCostsTable[0] < routeCost(this->solution)){
+            memcpy(this->solution,population[0],genesNum*sizeof(int));
+        }
+
+        ///Selekcja osobników do populacji macierzystej za pomocą ruletki
+        for (int i = 0; i < matingPopSize; ++i)
+            matingPopulation[i] = population[rouletteSelection(population,routeCostsTable,popSize,fitnessSum)];
+
+//        std::cout<<"matingpop:"<<std::endl;
+//        for(int i=0; i< matingPopSize; i++) {
+//            for (int j = 0; j < genesNum; ++j) {
+//                std::cout << matingPopulation[i][j] << " ";
+//            }
+//            std::cout<<std::endl;
+//        }
+//        std::cout<<"/////////////////////////////////////////////"<<std::endl;
+
+        int** offspringPopulation = new int*[2*matingCouples];
+        double offspringRouteCosts[2*matingCouples];
+        int offspringBorn = 0;
+
+        ///Rozmnażanie osobników z populacji macierzystej
+        for (int j = 0; j < matingCouples; ++j) {
+            int p = 1 + rand()%100;
+            ///Krzyżyjemy z pewnym prawdopodobieństwem
+            if( p < crossoverProb){
+                ///Wylosowanie pary rodziców
+                int parentA = rand()%matingPopSize;
+                int parentB = rand()%matingPopSize;
+                while (parentA == parentB)
+                    parentB = rand()%matingPopSize;
+
+                ///Tworzenie dzieci
+                int* childAB = new int[genesNum];
+                int* childBA = new int[genesNum];
+
+                ///Krzyżowanie metodą OX
+                OXcrossover(matingPopulation[parentA],matingPopulation[parentB], childAB, childBA, genesNum);
+//                std::cout<<"parent A:"<<parentA<<"\n[ ";
+//                for(int i = 0; i<genesNum;i++)
+//                    std::cout << matingPopulation[parentA][i] << " ";
+//                std::cout<<std::endl;
+//                std::cout<<"parent B:"<<parentB<<"\n[ ";
+//                for(int i = 0; i<genesNum;i++)
+//                    std::cout << matingPopulation[parentB][i] << " ";
+//                std::cout<<std::endl;
+//                std::cout<<"child AB:\n[ ";
+//                for(int i = 0; i<genesNum;i++)
+//                    std::cout << childAB[i] << " ";
+//                std::cout<<std::endl;
+//                std::cout<<"child BA:\n[ ";
+//                for(int i = 0; i<genesNum;i++)
+//                    std::cout << childBA[i] << " ";
+//                std::cout<<std::endl;
+
+                ///Mutowanie dzieci z pewnym prawdopodobieństwem
+                int mut = rand()%1000;
+                if(mut < mutationProb){
+                   // std::cout<<"mutation"<<std::endl;
+                    invertMutate(childAB,genesNum);
+                }
+
+                mut = rand()%1000;
+                if(mut < mutationProb){
+                    //std::cout<<"mutation"<<std::endl;
+                    invertMutate(childBA,genesNum);
+                }
+
+
+                offspringPopulation[offspringBorn] = new int[genesNum];
+                offspringPopulation[offspringBorn+1] = new int[genesNum];
+                memcpy(offspringPopulation[offspringBorn],childAB,genesNum*sizeof(int));
+                memcpy(offspringPopulation[offspringBorn+1],childBA,genesNum*sizeof(int));
+                offspringRouteCosts[offspringBorn] = routeCost(childAB);
+                //std::cout<<"born: "<<offspringBorn<<std::endl;
+                offspringRouteCosts[offspringBorn+1] = routeCost(childBA);
+                //std::cout<<"born+1: "<<offspringBorn+1<<std::endl;
+                offspringBorn += 2;
+
+                delete[] childAB;
+                delete[] childBA;
+            }
+        }
+
+        int* bigPopulation[popSize+offspringBorn];
+        memcpy(bigPopulation,population,popSize*sizeof(int*));
+        memcpy(bigPopulation+popSize,offspringPopulation,offspringBorn*sizeof(int*));
+        double bigPopCostTable[popSize+offspringBorn];
+        memcpy(bigPopCostTable,routeCostsTable,popSize*sizeof(double));
+        memcpy(bigPopCostTable+popSize,offspringRouteCosts,offspringBorn*sizeof(double));
+
+        fitnessSum = 0;
+        rankAndSort(bigPopulation,bigPopCostTable,popSize+offspringBorn,fitnessSum);
+
+        memcpy(population,bigPopulation,popSize*sizeof(int*));
+        for(int i = popSize; i<popSize+offspringBorn; i++)
+            delete[] bigPopulation[i];
+        memcpy(routeCostsTable,bigPopCostTable,popSize*sizeof(double));
+       std::cout<<"generations: "<<gen<<std::endl;
+    }
+}
+
+void TownsTSP::invertMutate(int *chromosome, int genesNum) {
+    int a = rand()%genesNum;
+    int b = a;
+    while (a == b)
+        b = rand()%genesNum;
+    if(a > b){
+        int buf = a;
+        a = b;
+        b = buf;
+    }
+
+    int invertRange = b - a + 1;
+    int invertBuf[invertRange];
+
+    for (int i = 0; i < invertRange; ++i)
+        invertBuf[i] = chromosome[b-i];
+    for (int i = 0; i < invertRange; ++i)
+        chromosome[a+i] = invertBuf[i];
+}
+
+void TownsTSP::rankAndSort(int** population,double* costsTable, int popSize, int &fitnessSum) {
+    for (int i = 0; i < popSize; ++i) {
+        fitnessSum += i+1;
+
+        ///Sortowanie osobników od najlepszego do najgorszego według kosztów dróg.
+        if (i > 0) {
+            int head = i;
+            while (head >= 1 && costsTable[head] < costsTable[head - 1]) {
+                ///Zamiana osobników miejscami, tak aby lepszy był na niższym indeksie
+                int* buf = population[head];
+                double costsBuf = costsTable[head];
+                costsTable[head] = costsTable[head-1];
+                costsTable[head-1] = costsBuf;
+                population[head] = population[head - 1];
+                population[head - 1] = buf;
+                head--;
+            }
+
+        }
+    }
+}
+
+int TownsTSP::rouletteSelection(int **population, double *costsTable, int popSize, int fitnessSum) {
+    int throwDice = rand()%fitnessSum; // losujemy liczbę od 0 - sumy przystosowań
+    int sum = 0;
+    for (int i = 0; i < popSize; ++i) {
+        sum += (popSize-i);
+        if(sum > throwDice)
+            return i;
+
+
+    }
+}
+
+void TownsTSP::OXcrossover(int *parentA, int *parentB, int *childAB, int *childBA, int genesNum) {
+    int a = rand()%genesNum;
+    int b = rand()%genesNum;
+    while (a==b)
+        b = rand()%genesNum;
+    if(a > b){
+        int buf = a;
+        a = b;
+        b = buf;
+    }
+
+    int crossSectionSize = b - a + 1;
+    int crossA[crossSectionSize];
+    int crossB[crossSectionSize];
+    for(int i = 0; i < crossSectionSize; i++){
+        childAB[a+i] = parentB[a+i];
+        crossB[i] = parentB[a+i];
+        childBA[a+i] = parentA[a+i];
+        crossA[i] = parentA[a+i];
+    }
+
+    int genesLeft = genesNum - crossSectionSize;
+    int k = (b == genesNum-1) ? 0 : b+1;
+    int toPut = k;
+    for(int i = 0; i < genesLeft; i++){
+        bool conflict = true;
+        while(conflict){
+            ///Porównujemy z wszystkim elementami w sekcji dopasowania
+            for (int j = 0; j < crossSectionSize; ++j) {
+                ///Jeśłi występuje konflikt
+                if(parentA[toPut] == crossB[j]){
+                    conflict = true;
+                    break;
+                }
+                else
+                    conflict = false;
+            }
+            ///Jeśli był konflikt to sprawdzamy kolejny element
+            if(conflict)
+                if(toPut==genesNum-1)
+                    toPut=0;
+                else
+                    toPut++;
+        }
+        childAB[k] = parentA[toPut];
+        if(k==genesNum-1)
+            k=0;
+        else
+            k++;
+
+        if(toPut == genesNum-1)
+            toPut=0;
+        else
+            toPut++;
+    }
+
+    k = (b == genesNum-1) ? 0 : b+1;
+    toPut = k;
+    for(int i = 0; i < genesLeft; i++){
+        bool conflict = true;
+        while(conflict){
+            ///Porównujemy z wszystkim elementami w sekcji dopasowania
+            for (int j = 0; j < crossSectionSize; ++j) {
+                ///Jeśłi występuje konflikt
+                if(parentB[toPut] == crossA[j]){
+                    conflict = true;
+                    break;
+                }
+                else
+                    conflict = false;
+            }
+            ///Jeśli był konflikt to sprawdzamy kolejny element
+            if(conflict)
+                if(toPut==genesNum-1)
+                    toPut=0;
+                else
+                    toPut++;
+        }
+        childBA[k] = parentB[toPut];
+        if(k==genesNum-1)
+            k=0;
+        else
+            k++;
+
+        if(toPut == genesNum-1)
+            toPut=0;
+        else
+            toPut++;
     }
 }
 

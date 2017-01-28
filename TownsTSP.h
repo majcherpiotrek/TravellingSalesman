@@ -67,7 +67,11 @@ public:
     void mutate(Specimen* specimen, int* root, int genesNum, int mutationProbability);
     void randomCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum);
     void rankAndSortPopulation(Specimen** population, int populationSize, int* root, int& fitnessSum);
-
+    void newGenetic(int generations, int popSize, int matingPopSize,int mutationProb);
+    void invertMutate(int* chromosome, int genesNum);
+    void rankAndSort(int** population, double* costsTable, int popSize, int& fitnessSum);
+    int rouletteSelection(int** population, double* costsTable, int popSize, int fitnessSum);
+    void OXcrossover(int* parentA, int* parentB, int* childAB, int* childBA, int genesNum);
 };
 
 
