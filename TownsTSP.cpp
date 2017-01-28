@@ -529,20 +529,18 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
     int genesNum = this->map_dim;
     ///Bazowe rozwiązanie - potrzebne do dekodowania chromosomów
     int* root = new int[genesNum];
-    memcpy(root, this->solution, genesNum*sizeof(int));
+    for(int i = 0; i< genesNum; i++)
+        root[i] = i;
     ///Utworzenie populacji bierzącego pokolenia
     Specimen** currentPopulation = new Specimen*[populationSize];
     ///Tablica przechowujaca indeksy osobników wybranych do krzyżowania
     Specimen** matingPopulation = new Specimen*[matingPopulationSize];
-    int matingCouplesNum = 3*matingPopulationSize;
+    int matingCouplesNum = populationSize;
 
-    ///Liczba najlepszych osobników w danym pokoleniu, przepisywanych do populacji następnego pokolenia
-    int elitSize = (int)(elitarismFactor*populationSize);
     ///Wygenerowanie losowej populacji startowej i zsumowanie przystosowań
     ///Zmienna na sumę wartości przystosowań dla całego pokolenia
     ///Przystosowania mają wartości od 1 do rozmiaru populacji (1 = najgorsze przystosowanie)
     int fitnessSum = 0;
-    float* selectionProbabilities = new float[populationSize];
 
 
     ///Wygenerowanie losowej populacji początkowej
@@ -559,17 +557,17 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
         ///Ocena osobników populacji
         rankAndSortPopulation(currentPopulation,populationSize,root,fitnessSum);
 
-        for(int i = 0; i<10;i++){
-            std::cout<<"dł drogi: "<<currentPopulation[i]->getCost() << " ";
-            int* chromosome = currentPopulation[i]->getChromosome();
-            std::cout<<"[ ";
-            for (int j = 0; j < genesNum ; ++j) {
-                std::cout<<chromosome[j]<<" ";
-            }
-            std::cout<<"]"<<std::endl;
-        }
-
-        std::cout<<"///////////////////////////////////"<<std::endl;
+//        for(int i = 0; i<10;i++){
+//            std::cout<<"dł drogi: "<<currentPopulation[i]->getCost() << " ";
+//            int* chromosome = currentPopulation[i]->getChromosome();
+//            std::cout<<"[ ";
+//            for (int j = 0; j < genesNum ; ++j) {
+//                std::cout<<chromosome[j]<<" ";
+//            }
+//            std::cout<<"]"<<std::endl;
+//        }
+//
+//        std::cout<<"///////////////////////////////////"<<std::endl;
 
         ///Porównanie z najlepszym dotychczas znalezionym
         if(currentPopulation[0]->getCost() < routeCost(this->solution)) {
@@ -624,8 +622,8 @@ void TownsTSP::genetic(int generations, int populationSize, double elitarismFact
                     }
                 }
 
-                mutate(offspringAB,genesNum,5);
-                mutate(offspringBA,genesNum,5);
+                mutate(offspringAB, root,genesNum,10);
+                mutate(offspringBA,root,genesNum,10);
 
                 ///Dodanie stworzonych potomków do populacji potomków
                 offspringPopulation[offspringBorn] = offspringAB;
@@ -738,18 +736,86 @@ void TownsTSP::twoPointCrossover(Specimen *parent1, Specimen *parent2, Specimen 
     child2->setChromosome(chromosome);
 }
 
-void TownsTSP::mutate(Specimen *specimen,int genesNum, int mutationProbability) {
+void TownsTSP::mutate(Specimen *specimen,int* root, int genesNum, int mutationProbability) {
 
     int throwDice = rand()%1000;
     if(throwDice < mutationProbability) {
-        //std::cout<<"Mutacja!"<<std::endl;
-        int geneToMute = rand() % genesNum;
-        int newGene = rand() % (genesNum - geneToMute);
-        specimen->getChromosome()[geneToMute] = newGene;
+
+        int route[genesNum];
+        specimen->decodeChromosome(root, route);
+
+        //////////////////////////////////////////////
+
+//        std::cout<<"Chromosom przed mutacją:\n[";
+//        for(int i = 0; i<genesNum;i++)
+//            std::cout<<specimen->getChromosome()[i] << " ";
+//        std::cout<<"]"<<std::endl;
+
+        ///////////////////////////////////////////
+
+        //////////////////////////////////////////////
+
+//        std::cout<<"Sciezka przed mutacją:\n[";
+//        for(int i = 0; i<genesNum;i++)
+//            std::cout<<route[i] << " ";
+//        std::cout<<"]"<<std::endl;
+
+        ///////////////////////////////////////////
+
+        ///Wykonanie mutacji invert na rozkodowanym chromosomie
+        int a = rand()%genesNum;
+        int b = a;
+        while (b == a)
+            b = rand()%genesNum;
+        if(a > b){
+            int buf = a;
+            a = b;
+            b = buf;
+        }
+
+        int invertSize = b - a + 1;
+        int invBuf[invertSize];
+        ///Odwrócenie kolejności mutowanego fragmentu
+        for(int i = 0; i < invertSize; i++)
+            invBuf[i] = route[b - i];
+        ///Zapisanie zmutowanego fragmentu z powrotem na ścieżkę
+        for(int i = 0; i < invertSize; i++)
+            route[a+i] = invBuf[i];
+
+        ///Zakodowanie nowej ścieżki
+        bool alreadyIn[genesNum];
+        for(int i = 0; i< genesNum;i++)
+            alreadyIn[i] = false;
+        for (int i = 0; i < genesNum; ++i) {
+            int index = 0;
+            for(int k = 0; k < route[i]; k++)
+                if(!alreadyIn[k])
+                    index++;
+            specimen->getChromosome()[i]=index;
+            alreadyIn[route[i]] = true;
+        }
+
+        //////////////////////////////////////////////
+
+//        std::cout<<"Chromosom po mutacjii:\n[";
+//        for(int i = 0; i<genesNum;i++)
+//            std::cout<<specimen->getChromosome()[i] << " ";
+//        std::cout<<"]"<<std::endl;
+
+        ///////////////////////////////////////////
+        int* decoded = new int [genesNum];
+        specimen->decodeChromosome(root, decoded);
+
+
+        //////////////////////////////////////////////
+//
+//        std::cout<<"Sciezka po mutacji:\n[";
+//        for(int i = 0; i<genesNum;i++)
+//            std::cout<<decoded[i] << " ";
+//        std::cout<<"]"<<std::endl;
+
+        ///////////////////////////////////////////
     }
-
-
-
 }
 
 void TownsTSP::randomCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum) {

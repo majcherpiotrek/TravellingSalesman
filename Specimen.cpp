@@ -13,30 +13,28 @@ Specimen::Specimen(int genesNum) {
 }
 
 void Specimen::decodeChromosome(int* root, int* routeFromChromosome) {
-    //tablica przechowujące informację o nr wierzchołków z root,
-    //które zostały już dodane do routeDFromChromosome
-    bool usedIndexes[genesNum];
-    for(int i = 0; i < genesNum; i++)
-        usedIndexes[i] = false;
 
-    for (int i = 0; i < genesNum; ++i) {
-        //zapisujemy kolejny indeks porządkowy z chromosomu
+    bool used[genesNum];
+    for (int i = 0; i < genesNum; ++i)
+        used[i] = false;
+
+    for (int i = 0; i < genesNum ; ++i) {
+        int k = -1;
+        int j = 0;
         int index = this->chromosome[i];
-        //szukamy aktualnego początku
-        int currentBeg = 0;
-        while(usedIndexes[currentBeg])
-            currentBeg++;
 
-        //dodajemy do ineksu porządkowego aktualny początek
-        index += currentBeg;
-        //jeśli kolejne indeksy były wykorzystane to szukamy pierwszego niewykorzystanego
-        while(usedIndexes[index])
-            index++;
+        while (k<index){
+            if(!used[j])
+                k++;
+            if(k == index)
+                break;
+            j++;
+        }
 
-        //dodajemy do rozkodowanego rozwiązania nr miasta z tabeli wyjściowej
-        routeFromChromosome[i] = root[index];
-        usedIndexes[index] = true;
+        routeFromChromosome[i] = root[j];
+        used[j] = true;
     }
+
 }
 
 void Specimen::setChromosome(int *chromosome) {
