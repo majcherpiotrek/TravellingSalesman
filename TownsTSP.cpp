@@ -527,8 +527,10 @@ void TownsTSP::newGenetic(int generations, int popSize, int matingPopSize, int m
     int* population[popSize];
     ///Tablica przechowująca koszty dróg reprezentowanych przez poszczególnych osobników
     double routeCostsTable[popSize];
+    int fitnessSum = 0;
     ///Wygenerowanie populacji początkowej
     for (int i = 0; i < popSize ; ++i) {
+        fitnessSum += i+1;
         population[i] = new int[genesNum];
         for (int j = 0; j < genesNum; ++j)
             population[i][j] = j;
@@ -539,7 +541,7 @@ void TownsTSP::newGenetic(int generations, int popSize, int matingPopSize, int m
 
     int* matingPopulation[matingPopSize];
     int matingCouples = popSize;
-    int fitnessSum;
+
 //    std::cout<<"[ ";
 //    for (int i = 0; i < popSize; ++i) {
 //        for(int k = 0; k < genesNum; k++)
@@ -548,9 +550,8 @@ void TownsTSP::newGenetic(int generations, int popSize, int matingPopSize, int m
 //    }
     for (int gen = 0; gen < generations; ++gen) {
 
-        fitnessSum = 0;
-        ///Ocena i posortowanie populacji
-        rankAndSort(population,routeCostsTable,popSize,fitnessSum);
+        ///Posortowanie populacji
+        quicksort(routeCostsTable,population,0,popSize-1);
 
         ///Porównanie z najlepszym dotychczas znalezionym rozwiązaniem
         if(routeCostsTable[0] < routeCost(this->solution)){
@@ -561,17 +562,8 @@ void TownsTSP::newGenetic(int generations, int popSize, int matingPopSize, int m
         for (int i = 0; i < matingPopSize; ++i)
             matingPopulation[i] = population[rouletteSelection(population,routeCostsTable,popSize,fitnessSum)];
 
-//        std::cout<<"matingpop:"<<std::endl;
-//        for(int i=0; i< matingPopSize; i++) {
-//            for (int j = 0; j < genesNum; ++j) {
-//                std::cout << matingPopulation[i][j] << " ";
-//            }
-//            std::cout<<std::endl;
-//        }
-//        std::cout<<"/////////////////////////////////////////////"<<std::endl;
-
         int** offspringPopulation = new int*[2*matingCouples];
-        double offspringRouteCosts[2*matingCouples];
+        double* offspringRouteCosts = new double[2*matingCouples];
         int offspringBorn = 0;
 
         ///Rozmnażanie osobników z populacji macierzystej
@@ -591,35 +583,16 @@ void TownsTSP::newGenetic(int generations, int popSize, int matingPopSize, int m
 
                 ///Krzyżowanie metodą OX
                 OXcrossover(matingPopulation[parentA],matingPopulation[parentB], childAB, childBA, genesNum);
-//                std::cout<<"parent A:"<<parentA<<"\n[ ";
-//                for(int i = 0; i<genesNum;i++)
-//                    std::cout << matingPopulation[parentA][i] << " ";
-//                std::cout<<std::endl;
-//                std::cout<<"parent B:"<<parentB<<"\n[ ";
-//                for(int i = 0; i<genesNum;i++)
-//                    std::cout << matingPopulation[parentB][i] << " ";
-//                std::cout<<std::endl;
-//                std::cout<<"child AB:\n[ ";
-//                for(int i = 0; i<genesNum;i++)
-//                    std::cout << childAB[i] << " ";
-//                std::cout<<std::endl;
-//                std::cout<<"child BA:\n[ ";
-//                for(int i = 0; i<genesNum;i++)
-//                    std::cout << childBA[i] << " ";
-//                std::cout<<std::endl;
 
                 ///Mutowanie dzieci z pewnym prawdopodobieństwem
                 int mut = rand()%1000;
-                if(mut < mutationProb){
-                   // std::cout<<"mutation"<<std::endl;
+                if(mut < mutationProb)
                     invertMutate(childAB,genesNum);
-                }
 
                 mut = rand()%1000;
-                if(mut < mutationProb){
-                    //std::cout<<"mutation"<<std::endl;
+                if(mut < mutationProb)
                     invertMutate(childBA,genesNum);
-                }
+
 
 
                 offspringPopulation[offspringBorn] = new int[genesNum];
@@ -627,9 +600,7 @@ void TownsTSP::newGenetic(int generations, int popSize, int matingPopSize, int m
                 memcpy(offspringPopulation[offspringBorn],childAB,genesNum*sizeof(int));
                 memcpy(offspringPopulation[offspringBorn+1],childBA,genesNum*sizeof(int));
                 offspringRouteCosts[offspringBorn] = routeCost(childAB);
-                //std::cout<<"born: "<<offspringBorn<<std::endl;
                 offspringRouteCosts[offspringBorn+1] = routeCost(childBA);
-                //std::cout<<"born+1: "<<offspringBorn+1<<std::endl;
                 offspringBorn += 2;
 
                 delete[] childAB;
@@ -640,17 +611,20 @@ void TownsTSP::newGenetic(int generations, int popSize, int matingPopSize, int m
         int* bigPopulation[popSize+offspringBorn];
         memcpy(bigPopulation,population,popSize*sizeof(int*));
         memcpy(bigPopulation+popSize,offspringPopulation,offspringBorn*sizeof(int*));
-        double bigPopCostTable[popSize+offspringBorn];
+        double* bigPopCostTable = new double[popSize+offspringBorn];
         memcpy(bigPopCostTable,routeCostsTable,popSize*sizeof(double));
         memcpy(bigPopCostTable+popSize,offspringRouteCosts,offspringBorn*sizeof(double));
 
-        fitnessSum = 0;
-        rankAndSort(bigPopulation,bigPopCostTable,popSize+offspringBorn,fitnessSum);
+        quicksort(bigPopCostTable, bigPopulation, 0, popSize+offspringBorn-1);
 
         memcpy(population,bigPopulation,popSize*sizeof(int*));
-        for(int i = popSize; i<popSize+offspringBorn; i++)
+        delete[] offspringRouteCosts;
+        for(int i = popSize; i<popSize+offspringBorn; i++){
             delete[] bigPopulation[i];
+        }
+
         memcpy(routeCostsTable,bigPopCostTable,popSize*sizeof(double));
+        delete[] bigPopCostTable;
        std::cout<<"generations: "<<gen<<std::endl;
     }
 }
@@ -672,27 +646,6 @@ void TownsTSP::invertMutate(int *chromosome, int genesNum) {
         invertBuf[i] = chromosome[b-i];
     for (int i = 0; i < invertRange; ++i)
         chromosome[a+i] = invertBuf[i];
-}
-void TownsTSP::rankAndSort(int** population,double* costsTable, int popSize, int &fitnessSum) {
-    for (int i = 0; i < popSize; ++i) {
-        fitnessSum += i+1;
-
-        ///Sortowanie osobników od najlepszego do najgorszego według kosztów dróg.
-        if (i > 0) {
-            int head = i;
-            while (head >= 1 && costsTable[head] < costsTable[head - 1]) {
-                ///Zamiana osobników miejscami, tak aby lepszy był na niższym indeksie
-                int* buf = population[head];
-                double costsBuf = costsTable[head];
-                costsTable[head] = costsTable[head-1];
-                costsTable[head-1] = costsBuf;
-                population[head] = population[head - 1];
-                population[head - 1] = buf;
-                head--;
-            }
-
-        }
-    }
 }
 int TownsTSP::rouletteSelection(int **population, double *costsTable, int popSize, int fitnessSum) {
     int throwDice = rand()%fitnessSum; // losujemy liczbę od 0 - sumy przystosowań
@@ -794,6 +747,34 @@ void TownsTSP::OXcrossover(int *parentA, int *parentB, int *childAB, int *childB
         else
             toPut++;
     }
+}
+void TownsTSP::quicksort(double* costsArray, int** population, int left, int right){
+    double v = costsArray[(left+right)/2];
+    int i = left;
+    int j = right;
+    double costBuf;
+    int* buf;
+    do{
+        while(costsArray[i]<v) i++;
+        while (costsArray[j]>v) j--;
+        if(i<=j){
+            costBuf = costsArray[i];
+            buf = population[i];
+
+            costsArray[i]=costsArray[j];
+            population[i]=population[j];
+
+            costsArray[j]=costBuf;
+            population[j]=buf;
+
+            i++;j--;
+        }
+    }while (i <=j);
+
+    if(j>left)
+        quicksort(costsArray,population,left,j);
+    if(i<right)
+        quicksort(costsArray,population,i,right);
 }
 
 

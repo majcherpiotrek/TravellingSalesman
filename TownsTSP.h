@@ -59,9 +59,9 @@ public:
     void randomNeighbourhoodTabu(int tt, int it, int nSize);
     void newGenetic(int generations, int popSize, int matingPopSize,int mutationProb);
     void invertMutate(int* chromosome, int genesNum);
-    void rankAndSort(int** population, double* costsTable, int popSize, int& fitnessSum);
     int rouletteSelection(int** population, double* costsTable, int popSize, int fitnessSum);
     void OXcrossover(int* parentA, int* parentB, int* childAB, int* childBA, int genesNum);
+    void quicksort(double* costsArray, int** population, int left, int right);
 };
 
 
