@@ -265,7 +265,7 @@ int main()
 
                     double wynik;
                     START =clock();
-                    tsp.newGenetic(100,10*tsp.getSize(),2*tsp.getSize(),10);
+                    tsp.newGenetic(200,30*tsp.getSize(),10*tsp.getSize(),5);
                     STOP = clock();
 
                     t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
