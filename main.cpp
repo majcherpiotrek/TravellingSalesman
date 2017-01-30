@@ -3,7 +3,7 @@
 #include "TownsATSP.h"
 #include <ctime>
 
-int ain()
+int main()
 {
     Menu main_menu = *(new Menu());
 
