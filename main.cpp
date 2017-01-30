@@ -3,7 +3,7 @@
 #include "TownsATSP.h"
 #include <ctime>
 
-int main()
+int ain()
 {
     Menu main_menu = *(new Menu());
 
@@ -265,7 +265,7 @@ int main()
 
                     double wynik;
                     START =clock();
-                    tsp.newGenetic(200,30*tsp.getSize(),10*tsp.getSize(),5);
+                    tsp.newGenetic(200,3900,1000,5);
                     STOP = clock();
 
                     t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;
@@ -302,7 +302,7 @@ int main()
 
                     double wynik;
                     START =clock();
-                    atsp.genetic(300,2000,0.1,SelectionStrategy::ROULETTE, CrossoverStrategy::RANDOM);
+                    atsp.newGenetic(200,1000,250,5);
                     STOP = clock();
 
                     t = (double)(STOP - START)/CLOCKS_PER_SEC*1000;

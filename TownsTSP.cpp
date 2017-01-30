@@ -625,7 +625,7 @@ void TownsTSP::newGenetic(int generations, int popSize, int matingPopSize, int m
 
         memcpy(routeCostsTable,bigPopCostTable,popSize*sizeof(double));
         delete[] bigPopCostTable;
-       std::cout<<"generations: "<<gen<<std::endl;
+       //std::cout<<"generations: "<<gen<<std::endl;
     }
 }
 void TownsTSP::invertMutate(int *chromosome, int genesNum) {

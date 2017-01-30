@@ -17,9 +17,6 @@
 #include <float.h>
 #include "TabuQueue.h"
 #include "TabuMatrix.h"
-#include "Specimen.h"
-#include "SelectionStrategy.h"
-#include "CrossoverStrategy.h"
 struct coords
 {
     double x;

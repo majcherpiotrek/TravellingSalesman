@@ -17,9 +17,6 @@
 #include <cstdlib>
 #include "TabuMatrix.h"
 #include "TabuQueue.h"
-#include "Specimen.h"
-#include "SelectionStrategy.h"
-#include "CrossoverStrategy.h"
 
 class TownsATSP
 {
@@ -52,16 +49,11 @@ public:
     void performSA();
     void deterministicTabu(int tt, int it);
     void randomNeighbourhoodTabu(int tt, int it, int nSize);
-    void genetic(int generations,int populationSize, double elitarismFactor, SelectionStrategy startegy, CrossoverStrategy crossoverStrategy);
-    void generateRandomPopulation(Specimen** population, int populationSize);
-    double getSpecimenRouteCost(Specimen *specimen, int *root);
-    Specimen* tournament(Specimen** population,int populationSize, int tournamentMembers);
-    Specimen* roulette(Specimen** population, int populationSize, int fitnessSum);
-    void onePointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum);
-    void twoPointCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum);
-    void mutate(Specimen* specimen,int genesNum, int mutationProbability, int mutationsNum);
-    void randomCrossover(Specimen *parent1, Specimen *parent2, Specimen *child1, Specimen *child2, int genesNum);
-
+    void newGenetic(int generations, int popSize, int matingPopSize,int mutationProb);
+    void invertMutate(int* chromosome, int genesNum);
+    int rouletteSelection(int** population, double* costsTable, int popSize, int fitnessSum);
+    void OXcrossover(int* parentA, int* parentB, int* childAB, int* childBA, int genesNum);
+    void quicksort(double* costsArray, int** population, int left, int right);
     int getSize(){ return this->map_dim;}
 };
 
